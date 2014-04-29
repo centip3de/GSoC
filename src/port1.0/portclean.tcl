@@ -59,6 +59,7 @@ proc portclean::clean_start {args} {
     }
 }
 
+
 proc portclean::clean_main {args} {
     global UI_PREFIX ports_clean_dist ports_clean_work ports_clean_logs \
            ports_clean_archive ports_clean_all keeplogs usealtworkpath
@@ -94,6 +95,15 @@ proc portclean::clean_main {args} {
     return 0
 }
 
+#Should probably be renamed, but this is just intended to replace commonly typed code. 
+proc portclean::catch_errors {args} {
+    ui_debug "Removing file: $args"
+    if {[catch {delete $args} result]} {
+        ui_debug "$::errorInfo"
+        ui_error "$result"
+    }
+}
+
 #
 # Remove the directory where the distfiles reside.
 # This is crude, but works.
@@ -108,19 +118,11 @@ proc portclean::clean_dist {args} {
         ui_debug "Looking for $distfile"
         set distfile [file join $distpath $distfile]
         if {[file isfile $distfile]} {
-            ui_debug "Removing file: $distfile"
-            if {[catch {delete $distfile} result]} {
-                ui_debug "$::errorInfo"
-                ui_error "$result"
-            }
+            catch_errors $distfile 
             incr count
         }
         if {!$usealtworkpath && [file isfile ${altprefix}${distfile}]} {
-            ui_debug "Removing file: ${altprefix}${distfile}"
-            if {[catch {delete ${altprefix}${distfile}} result]} {
-                ui_debug "$::errorInfo"
-                ui_error "$result"
-            }
+            catch_errors ${altprefix}${distfile} 
             incr count
         }
     }
@@ -139,19 +141,11 @@ proc portclean::clean_dist {args} {
         ui_debug "Looking for $patchfile"
         set patchfile [file join $distpath $patchfile]
         if {[file isfile $patchfile]} {
-            ui_debug "Removing file: $patchfile"
-            if {[catch {delete $patchfile} result]} {
-                ui_debug "$::errorInfo"
-                ui_error "$result"
-            }
+            catch_errors $patchfile
             incr count
         }
         if {!$usealtworkpath && [file isfile ${altprefix}${patchfile}]} {
-            ui_debug "Removing file: ${altprefix}${patchfile}"
-            if {[catch {delete ${altprefix}${patchfile}} result]} {
-                ui_debug "$::errorInfo"
-                ui_error "$result"
-            }
+            catch_errors ${altprefix}${patchfile}
             incr count
         }
     }
@@ -185,19 +179,11 @@ proc portclean::clean_dist {args} {
             set distdir [file join ${portdbpath} distfiles $dir]
         }
         if {[file isdirectory $distdir]} {
-            ui_debug "Removing directory: ${distdir}"
-            if {[catch {delete $distdir} result]} {
-                ui_debug "$::errorInfo"
-                ui_error "$result"
-            }
+            catch_errors $distdir
             incr count
         }
         if {!$usealtworkpath && [file isdirectory ${altprefix}${distdir}]} {
-            ui_debug "Removing directory: ${altprefix}${distdir}"
-            if {[catch {delete ${altprefix}${distdir}} result]} {
-                ui_debug "$::errorInfo"
-                ui_error "$result"
-            }
+            catch_errors ${altprefix}${distdir}
             incr count
         }
     }
@@ -213,11 +199,7 @@ proc portclean::clean_work {args} {
     global portbuildpath subbuildpath worksymlink usealtworkpath altprefix portpath
 
     if {[file isdirectory $subbuildpath]} {
-        ui_debug "Removing directory: ${subbuildpath}"
-        if {[catch {delete $subbuildpath} result]} {
-            ui_debug "$::errorInfo"
-            ui_error "$result"
-        }
+        catch_errors ${subbuildpath}
         # silently fail if non-empty (other subports might be using portbuildpath)
         catch {file delete $portbuildpath}
     } else {
@@ -225,11 +207,7 @@ proc portclean::clean_work {args} {
     }
 
     if {!$usealtworkpath && [file isdirectory ${altprefix}${subbuildpath}]} {
-        ui_debug "Removing directory: ${altprefix}${subbuildpath}"
-        if {[catch {delete ${altprefix}${subbuildpath}} result]} {
-            ui_debug "$::errorInfo"
-            ui_error "$result"
-        }
+        catch_errors ${altprefix}${subbuildpath}
         catch {file delete ${altprefix}${portbuildpath}}
     } else {
         ui_debug "No work directory found to remove at ${altprefix}${subbuildpath}"
@@ -254,11 +232,7 @@ proc portclean::clean_logs {args} {
     set logpath [getportlogpath $portpath]
     set subdir [file join $logpath $subport]
   	if {[file isdirectory $subdir]} {
-        ui_debug "Removing directory: ${subdir}"
-        if {[catch {delete $subdir} result]} {
-            ui_debug "$::errorInfo"
-            ui_error "$result"
-        }
+        catch_errors $subdir
         catch {file delete $logpath}
     } else {
         ui_debug "No log directory found to remove at ${logpath}"
@@ -293,17 +267,9 @@ proc portclean::clean_archive {args} {
             set archivetype [string range [file extension $path] 1 end]
             if {[file isfile $path] && ($archivetype eq "TMP"
                 || [extract_archive_metadata $path $archivetype portname] == $subport)} {
-                ui_debug "Removing archive: $path"
-                if {[catch {delete $path} result]} {
-                    ui_debug "$::errorInfo"
-                    ui_error "$result"
-                }
+                catch_errors $path
                 if {[file isfile ${path}.rmd160]} {
-                    ui_debug "Removing archive signature: ${path}.rmd160"
-                    if {[catch {delete ${path}.rmd160} result]} {
-                        ui_debug "$::errorInfo"
-                        ui_error "$result"
-                    }
+                    catch_errors ${path}.rmd160
                 }
                 incr count
             }
