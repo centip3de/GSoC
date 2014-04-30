@@ -34,6 +34,7 @@
 # the 'clean' target is provided by this package
 
 package provide portclean 1.0
+
 package require portutil 1.0
 package require Pextlib 1.0
 
@@ -49,11 +50,52 @@ namespace eval portclean {
 
 set_ui_prefix
 
+#Get all inactive ports, or all the versions of ports. Implementation lightly borrowed from /src/port/port.tcl, line 773
+#Currently unused, will be used at a later date.
+proc portclean::get_info { {get_inactive} {get_versions} } {
+    
+    #Get installed applications from the registry
+    #Create a list to store inactive apps in
+    #Create an associative array to store the app versions in, indexed by key. Need to initialize it with some empty key.
+    set installed_apps [registry::installed]
+    set inactive_apps {}
+    set app_versions {}
+
+    #Loop through each installed app
+    foreach app $installed_apps {
+
+        #Get the activity, name, and version from the returned list 
+        set active  [lindex $app 4]
+        set name    [lindex $app 0]
+        set version [lindex $app 1]
+
+        #Append the version in a way that's easy to regex. BAD IMPLEMENTATION.
+        lappend app_versions $name|$version
+
+        #Test if active. 1 = active, 0 = not active.
+        if {$active == 0} {
+
+            #Append inactive to list.
+            lappend inactive_apps $name
+        }
+    }
+
+    #Return all inactive.
+    if {$get_inactive == 1} {
+        return $inactive_apps
+    }
+
+    return $app_versions
+}
+
+#Currently unimplemented. 
+proc portclean::get_versions {args} {
+    #Get the version of all the ports installed. 
+}
+
 proc portclean::clean_start {args} {
     global UI_PREFIX prefix
-
     ui_notice "$UI_PREFIX [format [msgcat::mc "Cleaning %s"] [option subport]]"
-
     if {[getuid] == 0 && [geteuid] != 0} {
         elevateToRoot "clean"
     }
@@ -95,8 +137,8 @@ proc portclean::clean_main {args} {
     return 0
 }
 
-#Should probably be renamed, but this is just intended to replace commonly typed code. 
-proc portclean::catch_errors {args} {
+#Delete the specified file. Catch any errors. 
+proc portclean::delete_file {args} {
     ui_debug "Removing file: $args"
     if {[catch {delete $args} result]} {
         ui_debug "$::errorInfo"
@@ -118,11 +160,11 @@ proc portclean::clean_dist {args} {
         ui_debug "Looking for $distfile"
         set distfile [file join $distpath $distfile]
         if {[file isfile $distfile]} {
-            catch_errors $distfile 
+            delete_file $distfile 
             incr count
         }
         if {!$usealtworkpath && [file isfile ${altprefix}${distfile}]} {
-            catch_errors ${altprefix}${distfile} 
+            delete_file ${altprefix}${distfile} 
             incr count
         }
     }
@@ -141,11 +183,11 @@ proc portclean::clean_dist {args} {
         ui_debug "Looking for $patchfile"
         set patchfile [file join $distpath $patchfile]
         if {[file isfile $patchfile]} {
-            catch_errors $patchfile
+            delete_file $patchfile
             incr count
         }
         if {!$usealtworkpath && [file isfile ${altprefix}${patchfile}]} {
-            catch_errors ${altprefix}${patchfile}
+            delete_file ${altprefix}${patchfile}
             incr count
         }
     }
@@ -179,11 +221,11 @@ proc portclean::clean_dist {args} {
             set distdir [file join ${portdbpath} distfiles $dir]
         }
         if {[file isdirectory $distdir]} {
-            catch_errors $distdir
+            delete_file $distdir
             incr count
         }
         if {!$usealtworkpath && [file isdirectory ${altprefix}${distdir}]} {
-            catch_errors ${altprefix}${distdir}
+            delete_file ${altprefix}${distdir}
             incr count
         }
     }
@@ -199,7 +241,7 @@ proc portclean::clean_work {args} {
     global portbuildpath subbuildpath worksymlink usealtworkpath altprefix portpath
 
     if {[file isdirectory $subbuildpath]} {
-        catch_errors ${subbuildpath}
+        delete_file ${subbuildpath}
         # silently fail if non-empty (other subports might be using portbuildpath)
         catch {file delete $portbuildpath}
     } else {
@@ -207,7 +249,7 @@ proc portclean::clean_work {args} {
     }
 
     if {!$usealtworkpath && [file isdirectory ${altprefix}${subbuildpath}]} {
-        catch_errors ${altprefix}${subbuildpath}
+        delete_file ${altprefix}${subbuildpath}
         catch {file delete ${altprefix}${portbuildpath}}
     } else {
         ui_debug "No work directory found to remove at ${altprefix}${subbuildpath}"
@@ -232,7 +274,7 @@ proc portclean::clean_logs {args} {
     set logpath [getportlogpath $portpath]
     set subdir [file join $logpath $subport]
   	if {[file isdirectory $subdir]} {
-        catch_errors $subdir
+        delete_file $subdir
         catch {file delete $logpath}
     } else {
         ui_debug "No log directory found to remove at ${logpath}"
@@ -267,9 +309,9 @@ proc portclean::clean_archive {args} {
             set archivetype [string range [file extension $path] 1 end]
             if {[file isfile $path] && ($archivetype eq "TMP"
                 || [extract_archive_metadata $path $archivetype portname] == $subport)} {
-                catch_errors $path
+                delete_file $path
                 if {[file isfile ${path}.rmd160]} {
-                    catch_errors ${path}.rmd160
+                    delete_file ${path}.rmd160
                 }
                 incr count
             }
