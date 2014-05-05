@@ -33,8 +33,17 @@
 
 # the 'clean' target is provided by this package
 
-package provide portclean 1.0
 
+# TODO:
+# Register the "port clean inactive" command with port.tcl and all that involves.
+# Implement a hash-map, or multidimensional array for ease of app info keeping. Write it yourself if you have to.
+# Add distfile version checking.
+# Add multiple version checking. Test with multiple versions of Python? Or Perl? Or some other common multi-versioned software (Gimp?).
+# Figure out what the hell is going on with "port clean all" vs "port clean installed"
+# Add docstrings for the rest of the functions in here at the end. Lack of documentation is sad. 
+# Remove the useless/structure comments and add actual docstrings.
+
+package provide portclean 1.0
 package require portutil 1.0
 package require Pextlib 1.0
 
@@ -69,7 +78,7 @@ proc portclean::get_info { {get_inactive} {get_versions} } {
         set name    [lindex $app 0]
         set version [lindex $app 1]
 
-        #Append the version in a way that's easy to regex. BAD IMPLEMENTATION.
+        #Append the version in a way that's easy to regex. FIXME. BAD IMPLEMENTATION.
         lappend app_versions $name|$version
 
         #Test if active. 1 = active, 0 = not active.
@@ -86,11 +95,6 @@ proc portclean::get_info { {get_inactive} {get_versions} } {
     }
 
     return $app_versions
-}
-
-#Currently unimplemented. 
-proc portclean::get_versions {args} {
-    #Get the version of all the ports installed. 
 }
 
 proc portclean::clean_start {args} {
@@ -115,12 +119,14 @@ proc portclean::clean_main {args} {
         ui_info "$UI_PREFIX [format [msgcat::mc "Removing distfiles for %s"] [option subport]]"
         clean_dist
     }
+
     if {([info exists ports_clean_all] && $ports_clean_all eq "yes" || \
         [info exists ports_clean_archive] && $ports_clean_archive eq "yes")
         && !$usealtworkpath} {
         ui_info "$UI_PREFIX [format [msgcat::mc "Removing temporary archives for %s"] [option subport]]"
         clean_archive
     }
+    
     if {[info exists ports_clean_all] && $ports_clean_all eq "yes" || \
         [info exists ports_clean_work] && $ports_clean_work eq "yes" || \
         [info exists ports_clean_archive] && $ports_clean_archive eq "yes" || \
@@ -129,10 +135,13 @@ proc portclean::clean_main {args} {
          ui_info "$UI_PREFIX [format [msgcat::mc "Removing work directory for %s"] [option subport]]"
          clean_work
     }
+
     if {(([info exists ports_clean_logs] && $ports_clean_logs eq "yes") || ($keeplogs eq "no"))
         && !$usealtworkpath} {
         clean_logs
     }
+
+    #FIXME: Put a similar thing here for port_clean_inactive. This'll probably mean registering it in port.tcl and all that jazz.
 
     return 0
 }
@@ -143,6 +152,43 @@ proc portclean::delete_file {args} {
     if {[catch {delete $args} result]} {
         ui_debug "$::errorInfo"
         ui_error "$result"
+    }
+}
+
+#Uninstall all inactive apps. Everything except uninstallation was tested to work, including all regretion tests.
+#FIXME: This would be SO much easier and efficient if it were possible to pass in an associative array, or even a multidimensional array,
+#so two loops weren't neccessary. This would mean going from O(N) (current) to O(N^2).  
+proc portclean::clean_inactive {} {
+
+    #Getting all inactive apps
+    set inactive_apps [get_info 1 0] 
+
+    #If no inactive ports are found, leave.
+    if { [llength $inactive_apps] == 0 } {
+        puts "Found no inactive ports."
+        return
+    }
+
+    #Be nice to the user, and get all installed apps
+    puts "Ports that are no longer active were found: \n$inactive_apps"
+    set installed_apps [registry::installed] 
+
+    #Loop through all installed apps, getting their info. (Where the hash map would be SUPER useful...)
+    foreach installed $installed_apps {
+
+        set name     [lindex $installed 0]
+        set version  [lindex $installed 1]
+        set revision [lindex $installed 2]
+        set varients [lindex $installed 3]
+        set active   [lindex $installed 4]
+
+        #Loop through all inactive apps and uninstall them using information from the previous loop. 
+        foreach inactive $inactive_apps {
+            if { $inactive eq $name } {
+                puts "Uninstalling: $name"
+                registry_uninstall $name $version $revision $varients {}
+            }
+        }
     }
 }
 
