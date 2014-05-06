@@ -36,12 +36,14 @@
 
 # TODO:
 # Register the "port clean inactive" command with port.tcl and all that involves.
-# Implement a hash-map, or multidimensional array for ease of app info keeping. Write it yourself if you have to.
 # Add distfile version checking.
 # Add multiple version checking. Test with multiple versions of Python? Or Perl? Or some other common multi-versioned software (Gimp?).
 # Figure out what the hell is going on with "port clean all" vs "port clean installed"
 # Add docstrings for the rest of the functions in here at the end. Lack of documentation is sad. 
 # Remove the useless/structure comments and add actual docstrings.
+
+# Finished:
+# Implement a hash-map, or multidimensional array for ease of app info keeping. Write it yourself if you have to.
 
 package provide portclean 1.0
 package require portutil 1.0
@@ -59,42 +61,47 @@ namespace eval portclean {
 
 set_ui_prefix
 
-#Get all inactive ports, or all the versions of ports. Implementation lightly borrowed from /src/port/port.tcl, line 773
-#Currently unused, will be used at a later date.
-proc portclean::get_info { {get_inactive} {get_versions} } {
-    
-    #Get installed applications from the registry
-    #Create a list to store inactive apps in
-    #Create an associative array to store the app versions in, indexed by key. Need to initialize it with some empty key.
-    set installed_apps [registry::installed]
-    set inactive_apps {}
-    set app_versions {}
+proc portclean::is_inactive {app} {
 
-    #Loop through each installed app
+    # Determine's whether an application is inactive or not.
+    # Args: 
+    #           app - An array where the fourth item in it is the activity of the application. 
+    # Returns:
+    #           1 if inactive, 0 if active.
+
+    if {[lindex $app 4] == 0} {
+        return 1
+    }
+    return 0
+}
+
+proc portclean::get_info {} {
+
+    # Get's the information of all installed appliations (those returned by registry::instaled), and returns it in a
+    # multidimensional list.
+    #
+    # Args:
+    #           None
+    #Returns:
+    #           A multidimensional list where each app is a sublist, i.e., {{First Application Info} {Second Application Info} {...}}
+    #           Indexes of each sublist are: 0 = name, 1 = version, 2 = revision, 3 = variets, 4 = activity, and 5 = epoch.
+    
+    set installed_apps [registry::installed]
+    set app_info [list] 
+
     foreach app $installed_apps {
 
-        #Get the activity, name, and version from the returned list 
-        set active  [lindex $app 4]
-        set name    [lindex $app 0]
-        set version [lindex $app 1]
+        set name     [lindex $app 0]
+        set version  [lindex $app 1]
+        set revision [lindex $app 2]
+        set varients [lindex $app 3]
+        set active   [lindex $app 4]
+        set epoch    [lindex $app 5]
 
-        #Append the version in a way that's easy to regex. FIXME. BAD IMPLEMENTATION.
-        lappend app_versions $name|$version
-
-        #Test if active. 1 = active, 0 = not active.
-        if {$active == 0} {
-
-            #Append inactive to list.
-            lappend inactive_apps $name
-        }
+        lappend app_info [list $name $version $revision $varients $active $epoch]
     }
 
-    #Return all inactive.
-    if {$get_inactive == 1} {
-        return $inactive_apps
-    }
-
-    return $app_versions
+    return $app_info
 }
 
 proc portclean::clean_start {args} {
@@ -146,8 +153,15 @@ proc portclean::clean_main {args} {
     return 0
 }
 
-#Delete the specified file. Catch any errors. 
 proc portclean::delete_file {args} {
+
+    # Attempts to delete a given file, and catches the errors if there are any.
+    #
+    # Args:
+    #           args - The file path
+    # Returns:
+    #           None
+
     ui_debug "Removing file: $args"
     if {[catch {delete $args} result]} {
         ui_debug "$::errorInfo"
@@ -155,41 +169,31 @@ proc portclean::delete_file {args} {
     }
 }
 
-#Uninstall all inactive apps. Everything except uninstallation was tested to work, including all regretion tests.
-#FIXME: This would be SO much easier and efficient if it were possible to pass in an associative array, or even a multidimensional array,
-#so two loops weren't neccessary. This would mean going from O(N) (current) to O(N^2).  
 proc portclean::clean_inactive {} {
 
-    #Getting all inactive apps
-    set inactive_apps [get_info 1 0] 
+    # Attempts to uninstall all inactive applications. (Performance is now O(N)!)
+    #
+    # Args: 
+    #           None
+    # Returns: 
+    #           0 if execution was successful.
 
-    #If no inactive ports are found, leave.
-    if { [llength $inactive_apps] == 0 } {
-        puts "Found no inactive ports."
-        return
-    }
+    set apps [get_info]
+    set inactive_count 0
 
-    #Be nice to the user, and get all installed apps
-    puts "Ports that are no longer active were found: \n$inactive_apps"
-    set installed_apps [registry::installed] 
+    foreach app $apps {
 
-    #Loop through all installed apps, getting their info. (Where the hash map would be SUPER useful...)
-    foreach installed $installed_apps {
-
-        set name     [lindex $installed 0]
-        set version  [lindex $installed 1]
-        set revision [lindex $installed 2]
-        set varients [lindex $installed 3]
-        set active   [lindex $installed 4]
-
-        #Loop through all inactive apps and uninstall them using information from the previous loop. 
-        foreach inactive $inactive_apps {
-            if { $inactive eq $name } {
-                puts "Uninstalling: $name"
-                registry_uninstall $name $version $revision $varients {}
-            }
+        if { [is_inactive $app] } {
+            set name [lindex $app 0]
+            puts "Uninstalling: $name"
+            incr inactive_count
         }
     }
+    if { $inactive_count == 0 } {
+        puts "Found no inactive ports."
+    }
+
+    return 0
 }
 
 #
@@ -198,6 +202,8 @@ proc portclean::clean_inactive {} {
 #
 proc portclean::clean_dist {args} {
     global name ports_force distpath dist_subdir distfiles patchfiles usealtworkpath portdbpath altprefix
+
+    clean_inactive
 
     # remove known distfiles for sure (if they exist)
     set count 0
