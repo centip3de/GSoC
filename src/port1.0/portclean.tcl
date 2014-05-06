@@ -104,6 +104,49 @@ proc portclean::get_info {} {
     return $app_info
 }
 
+proc portclean::delete_file {args} {
+
+    # Attempts to delete a given file, and catches the errors if there are any.
+    #
+    # Args:
+    #           args - The file path
+    # Returns:
+    #           None
+
+    ui_debug "Removing file: $args"
+    if {[catch {delete $args} result]} {
+        ui_debug "$::errorInfo"
+        ui_error "$result"
+    }
+}
+
+proc portclean::clean_inactive {} {
+
+    # Attempts to uninstall all inactive applications. (Performance is now O(N)!)
+    #
+    # Args: 
+    #           None
+    # Returns: 
+    #           0 if execution was successful.
+
+    set apps [get_info]
+    set inactive_count 0
+
+    foreach app $apps {
+
+        if { [is_inactive $app] } {
+            set name [lindex $app 0]
+            puts "Uninstalling: $name"
+            registry::uninstall $app
+            incr inactive_count
+        }
+    }
+    if { $inactive_count == 0 } {
+        puts "Found no inactive ports."
+    }
+
+    return 0
+}
 proc portclean::clean_start {args} {
     global UI_PREFIX prefix
     ui_notice "$UI_PREFIX [format [msgcat::mc "Cleaning %s"] [option subport]]"
@@ -153,48 +196,6 @@ proc portclean::clean_main {args} {
     return 0
 }
 
-proc portclean::delete_file {args} {
-
-    # Attempts to delete a given file, and catches the errors if there are any.
-    #
-    # Args:
-    #           args - The file path
-    # Returns:
-    #           None
-
-    ui_debug "Removing file: $args"
-    if {[catch {delete $args} result]} {
-        ui_debug "$::errorInfo"
-        ui_error "$result"
-    }
-}
-
-proc portclean::clean_inactive {} {
-
-    # Attempts to uninstall all inactive applications. (Performance is now O(N)!)
-    #
-    # Args: 
-    #           None
-    # Returns: 
-    #           0 if execution was successful.
-
-    set apps [get_info]
-    set inactive_count 0
-
-    foreach app $apps {
-
-        if { [is_inactive $app] } {
-            set name [lindex $app 0]
-            puts "Uninstalling: $name"
-            incr inactive_count
-        }
-    }
-    if { $inactive_count == 0 } {
-        puts "Found no inactive ports."
-    }
-
-    return 0
-}
 
 #
 # Remove the directory where the distfiles reside.
@@ -202,8 +203,6 @@ proc portclean::clean_inactive {} {
 #
 proc portclean::clean_dist {args} {
     global name ports_force distpath dist_subdir distfiles patchfiles usealtworkpath portdbpath altprefix
-
-    clean_inactive
 
     # remove known distfiles for sure (if they exist)
     set count 0
