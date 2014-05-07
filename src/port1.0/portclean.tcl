@@ -46,7 +46,9 @@
 # Implement a hash-map, or multidimensional array for ease of app info keeping. Write it yourself if you have to.
 
 package provide portclean 1.0
+
 package require portutil 1.0
+package require registry_uninstall 2.0 
 package require Pextlib 1.0
 
 set org.macports.clean [target_new org.macports.clean portclean::clean_main]
@@ -137,8 +139,10 @@ proc portclean::clean_inactive {} {
         if { [is_inactive $app] } {
             set name [lindex $app 0]
             puts "Uninstalling: $name"
-            registry::uninstall $app
             incr inactive_count
+
+            # Note: 'uninstall' takes a name, version, and an options list. 
+            registry_uninstall::uninstall [lindex $app 0] [lindex $app 1] {}
         }
     }
     if { $inactive_count == 0 } {
@@ -147,6 +151,11 @@ proc portclean::clean_inactive {} {
 
     return 0
 }
+
+proc portclean::clean_multiple_versions {} {
+    #Get and remove multiple versions of apps. Because of technical difficulties, I can't implement this code right now.
+}
+
 proc portclean::clean_start {args} {
     global UI_PREFIX prefix
     ui_notice "$UI_PREFIX [format [msgcat::mc "Cleaning %s"] [option subport]]"
