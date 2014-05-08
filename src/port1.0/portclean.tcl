@@ -1,7 +1,7 @@
 # -*- coding: utf-8; mode: tcl; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- vim:fenc=utf-8:ft=tcl:et:sw=4:ts=4:sts=4
 # $Id: portclean.tcl 116449 2014-01-25 16:57:17Z cal@macports.org $
 #
-# Copyright (c) 2005-2007, 2009-2011, 2013 The MacPorts Project
+# Copyright (c) 2005-2007, 2009-2011, 2013-2014 The MacPorts Project
 # Copyright (c) 2004 Robert Shaw <rshaw@opendarwin.org>
 # Copyright (c) 2002 - 2003 Apple Inc.
 # All rights reserved.
@@ -38,12 +38,12 @@
 # Register the "port clean inactive" command with port.tcl and all that involves.
 # Add distfile version checking.
 # Add multiple version checking. Test with multiple versions of Python? Or Perl? Or some other common multi-versioned software (Gimp?).
-# Figure out what the hell is going on with "port clean all" vs "port clean installed"
 # Add docstrings for the rest of the functions in here at the end. Lack of documentation is sad. 
 # Remove the useless/structure comments and add actual docstrings.
 
 # Finished:
 # Implement a hash-map, or multidimensional array for ease of app info keeping. Write it yourself if you have to.
+# Figure out what the hell is going on with "port clean all" vs "port clean installed"
 
 package provide portclean 1.0
 
@@ -63,7 +63,7 @@ namespace eval portclean {
 
 set_ui_prefix
 
-proc portclean::is_inactive {app} {
+proc is_inactive {app} {
 
     # Determine's whether an application is inactive or not.
     # Args: 
@@ -106,7 +106,7 @@ proc portclean::get_info {} {
     return $app_info
 }
 
-proc portclean::delete_file {args} {
+proc delete_file {args} {
 
     # Attempts to delete a given file, and catches the errors if there are any.
     #
