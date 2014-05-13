@@ -43,12 +43,11 @@
 
 # Finished:
 # Implement a hash-map, or multidimensional array for ease of app info keeping. Write it yourself if you have to.
-# Figure out what the hell is going on with "port clean all" vs "port clean installed"
+# Figure out what the hell is going on with "port clean all" vs "port clean installed" the 'clean' target is provided by this package
 
 package provide portclean 1.0
 
 package require portutil 1.0
-package require registry_uninstall 2.0 
 package require Pextlib 1.0
 
 set org.macports.clean [target_new org.macports.clean portclean::clean_main]
@@ -156,14 +155,16 @@ proc portclean::clean_multiple_versions {} {
     #Get and remove multiple versions of apps. Because of technical difficulties, I can't implement this code right now.
 }
 
+
 proc portclean::clean_start {args} {
     global UI_PREFIX prefix
+
     ui_notice "$UI_PREFIX [format [msgcat::mc "Cleaning %s"] [option subport]]"
+
     if {[getuid] == 0 && [geteuid] != 0} {
         elevateToRoot "clean"
     }
 }
-
 
 proc portclean::clean_main {args} {
     global UI_PREFIX ports_clean_dist ports_clean_work ports_clean_logs \
@@ -178,14 +179,12 @@ proc portclean::clean_main {args} {
         ui_info "$UI_PREFIX [format [msgcat::mc "Removing distfiles for %s"] [option subport]]"
         clean_dist
     }
-
     if {([info exists ports_clean_all] && $ports_clean_all eq "yes" || \
         [info exists ports_clean_archive] && $ports_clean_archive eq "yes")
         && !$usealtworkpath} {
         ui_info "$UI_PREFIX [format [msgcat::mc "Removing temporary archives for %s"] [option subport]]"
         clean_archive
     }
-    
     if {[info exists ports_clean_all] && $ports_clean_all eq "yes" || \
         [info exists ports_clean_work] && $ports_clean_work eq "yes" || \
         [info exists ports_clean_archive] && $ports_clean_archive eq "yes" || \
@@ -194,17 +193,13 @@ proc portclean::clean_main {args} {
          ui_info "$UI_PREFIX [format [msgcat::mc "Removing work directory for %s"] [option subport]]"
          clean_work
     }
-
     if {(([info exists ports_clean_logs] && $ports_clean_logs eq "yes") || ($keeplogs eq "no"))
         && !$usealtworkpath} {
         clean_logs
     }
 
-    #FIXME: Put a similar thing here for port_clean_inactive. This'll probably mean registering it in port.tcl and all that jazz.
-
     return 0
 }
-
 
 #
 # Remove the directory where the distfiles reside.
@@ -220,11 +215,11 @@ proc portclean::clean_dist {args} {
         ui_debug "Looking for $distfile"
         set distfile [file join $distpath $distfile]
         if {[file isfile $distfile]} {
-            delete_file $distfile 
+            delete_file $distfile
             incr count
         }
         if {!$usealtworkpath && [file isfile ${altprefix}${distfile}]} {
-            delete_file ${altprefix}${distfile} 
+            delete_file ${altprefix}${distfile}
             incr count
         }
     }
@@ -301,7 +296,7 @@ proc portclean::clean_work {args} {
     global portbuildpath subbuildpath worksymlink usealtworkpath altprefix portpath
 
     if {[file isdirectory $subbuildpath]} {
-        delete_file ${subbuildpath}
+        delete_file $subbuildpath
         # silently fail if non-empty (other subports might be using portbuildpath)
         catch {file delete $portbuildpath}
     } else {
