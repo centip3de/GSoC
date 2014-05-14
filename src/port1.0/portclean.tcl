@@ -70,7 +70,7 @@ proc is_inactive {app} {
     # Returns:
     #           1 if inactive, 0 if active.
 
-    if {[lindex $app 4] == 0} {
+    if {[lindex $app 4] == 1} {
         return 1
     }
     return 0
@@ -141,7 +141,7 @@ proc portclean::clean_inactive {} {
             incr inactive_count
 
             # Note: 'uninstall' takes a name, version, and an options list. 
-            registry_uninstall::uninstall [lindex $app 0] [lindex $app 1] {}
+            registry_uninstall [lindex $app 0] [lindex $app 1] {}
         }
     }
     if { $inactive_count == 0 } {
