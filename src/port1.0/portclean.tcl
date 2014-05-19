@@ -105,7 +105,7 @@ proc portclean::get_info {} {
     return $app_info
 }
 
-proc delete_file {args} {
+proc delete_file {file} {
 
     # Attempts to delete a given file, and catches the errors if there are any.
     #
@@ -114,8 +114,8 @@ proc delete_file {args} {
     # Returns:
     #           None
 
-    ui_debug "Removing file: $args"
-    if {[catch {delete $args} result]} {
+    ui_debug "Removing file: $file"
+    if {[catch {delete $file} result]} {
         ui_debug "$::errorInfo"
         ui_error "$result"
     }
@@ -150,11 +150,6 @@ proc portclean::clean_inactive {} {
 
     return 0
 }
-
-proc portclean::clean_multiple_versions {} {
-    #Get and remove multiple versions of apps. Because of technical difficulties, I can't implement this code right now.
-}
-
 
 proc portclean::clean_start {args} {
     global UI_PREFIX prefix
@@ -205,8 +200,13 @@ proc portclean::clean_main {args} {
 # Remove the directory where the distfiles reside.
 # This is crude, but works.
 #
-proc portclean::clean_dist {args} {
+proc portclean::clean_dist {} {
     global name ports_force distpath dist_subdir distfiles patchfiles usealtworkpath portdbpath altprefix
+
+    puts "Name: $name"
+    puts "Dispath: $distpath"
+    puts "Disfiles: $distfiles"
+    puts "Patchfiles: $patchfiles "
 
     # remove known distfiles for sure (if they exist)
     set count 0
@@ -292,7 +292,7 @@ proc portclean::clean_dist {args} {
     return 0
 }
 
-proc portclean::clean_work {args} {
+proc portclean::clean_work {} {
     global portbuildpath subbuildpath worksymlink usealtworkpath altprefix portpath
 
     if {[file isdirectory $subbuildpath]} {
@@ -324,7 +324,8 @@ proc portclean::clean_work {args} {
 
     return 0
 }
-proc portclean::clean_logs {args} {
+
+proc portclean::clean_logs {} {
     global portpath portbuildpath worksymlink portverbose keeplogs prefix subport
     set logpath [getportlogpath $portpath]
     set subdir [file join $logpath $subport]
@@ -337,7 +338,7 @@ proc portclean::clean_logs {args} {
     return 0
 }
 
-proc portclean::clean_archive {args} {
+proc portclean::clean_archive {} {
     global subport ports_version_glob portdbpath
 
     # Define archive destination directory, target filename, regex for archive name
