@@ -67,11 +67,11 @@ proc is_inactive {app} {
 
     # Determine's whether an application is inactive or not.
     # Args: 
-    #           app - An array where the fourth item in it is the activity of the application. 
+    #           app - An array where the fourth item in it is the activity of the application.
     # Returns:
     #           1 if inactive, 0 if active.
 
-    if {[lindex $app 4] == 1} {
+    if {[lindex $app 4] == 0} {
         return 1
     }
     return 0
@@ -99,8 +99,6 @@ proc portclean::get_info {} {
         set varients [lindex $app 3]
         set active   [lindex $app 4]
         set epoch    [lindex $app 5]
-
-        puts [portrpm::make_dependency_list $name]
 
         lappend app_info [list $name $version $revision $varients $active $epoch]
     }
@@ -164,7 +162,7 @@ proc portclean::clean_start {args} {
     }
 }
 
-proc portclean::clean_main {} {
+proc portclean::clean_main {args} {
 
     # The main function. Picks which action to do based on which globals (ew) are set or not. 
     #
