@@ -48,6 +48,7 @@
 package provide portclean 1.0
 
 package require portutil 1.0
+package require portrpm 1.0
 package require Pextlib 1.0
 
 set org.macports.clean [target_new org.macports.clean portclean::clean_main]
@@ -99,13 +100,15 @@ proc portclean::get_info {} {
         set active   [lindex $app 4]
         set epoch    [lindex $app 5]
 
+        puts [portrpm::make_dependency_list $name]
+
         lappend app_info [list $name $version $revision $varients $active $epoch]
     }
 
     return $app_info
 }
 
-proc delete_file {file} {
+proc delete_file {args} {
 
     # Attempts to delete a given file, and catches the errors if there are any.
     #
@@ -114,8 +117,8 @@ proc delete_file {file} {
     # Returns:
     #           None
 
-    ui_debug "Removing file: $file"
-    if {[catch {delete $file} result]} {
+    ui_debug "Removing file: $args"
+    if {[catch {delete $args} result]} {
         ui_debug "$::errorInfo"
         ui_error "$result"
     }
@@ -161,8 +164,23 @@ proc portclean::clean_start {args} {
     }
 }
 
-proc portclean::clean_main {args} {
-    global UI_PREFIX ports_clean_dist ports_clean_work ports_clean_logs \
+proc portclean::clean_main {} {
+
+    # The main function. Picks which action to do based on which globals (ew) are set or not. 
+    #
+    # Args (i.e. globals): 
+    #           ports_clean_dist     - Determines whether to do 'port clean dist' or not. Set to 'yes' or 'no'.
+    #           ports_clean_work     - Determines whether to do 'port clean work' or not. Set to 'yes' or 'no'.
+    #           ports_clean_logs     - Determines whether to do 'port clean logs' or not. Set to 'yes' or 'no'.
+    #           ports_clean_inactive - Determines whether to do 'port clean inactive' or not. Set to 'yes' or 'no'.
+    #           ports_clean_archive  - Determines whether to do 'port clean archive' or not. Set to 'yes' or 'no'.
+    #           ports_clean_all      - Determines whether to do all 'port clean' operations. Set to 'yes' or 'no'.
+    #           keeplogs             - Determines whether to do 'port clean logs' or not. Set to 'yes' or 'no'.
+    #
+    # Returns:
+    #           None
+
+    global UI_PREFIX ports_clean_dist ports_clean_work ports_clean_logs ports_clean_inactive \
            ports_clean_archive ports_clean_all keeplogs usealtworkpath
 
     if {$usealtworkpath} {
@@ -193,6 +211,11 @@ proc portclean::clean_main {args} {
         clean_logs
     }
 
+    if {[info exists ports_clean_inactive] && $port_clean_inactive eq "yes" || \
+        [info exists ports_clean_all] && $port_clean_all eq "yes"} {
+            clean_inactive
+    }
+
     return 0
 }
 
@@ -202,11 +225,6 @@ proc portclean::clean_main {args} {
 #
 proc portclean::clean_dist {} {
     global name ports_force distpath dist_subdir distfiles patchfiles usealtworkpath portdbpath altprefix
-
-    puts "Name: $name"
-    puts "Dispath: $distpath"
-    puts "Disfiles: $distfiles"
-    puts "Patchfiles: $patchfiles "
 
     # remove known distfiles for sure (if they exist)
     set count 0
