@@ -2,7 +2,7 @@
 # -*- coding: utf-8; mode: tcl; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- vim:fenc=utf-8:filetype=tcl:et:sw=4:ts=4:sts=4
 # $Id: port.tcl 119177 2014-04-18 22:35:29Z cal@macports.org $
 #
-# Copyright (c) 2004-2013 The MacPorts Project
+# Copyright (c) 2004-2014 The MacPorts Project
 # Copyright (c) 2004 Robert Shaw <rshaw@opendarwin.org>
 # Copyright (c) 2002-2003 Apple Inc.
 # All rights reserved.
@@ -4331,7 +4331,7 @@ array set cmd_opts_array {
     install     {no-rev-upgrade unrequested}
     uninstall   {follow-dependents follow-dependencies no-exec}
     variants    {index}
-    clean       {all archive dist work logs}
+    clean       {all archive dist work logs inactive}
     mirror      {new}
     lint        {nitpick}
     select      {list set show summary}
