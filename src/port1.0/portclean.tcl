@@ -77,7 +77,7 @@ proc is_inactive {app} {
     return 0
 }
 
-proc portclean::get_info {} {
+proc get_info {} {
 
     # Get's the information of all installed appliations (those returned by registry::instaled), and returns it in a
     # multidimensional list.
