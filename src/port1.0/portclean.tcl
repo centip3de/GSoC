@@ -34,21 +34,10 @@
 # the 'clean' target is provided by this package
 
 
-# TODO:
-# Register the "port clean inactive" command with port.tcl and all that involves.
-# Add distfile version checking.
-# Add multiple version checking. Test with multiple versions of Python? Or Perl? Or some other common multi-versioned software (Gimp?).
-# Add docstrings for the rest of the functions in here at the end. Lack of documentation is sad. 
-# Remove the useless/structure comments and add actual docstrings.
-
-# Finished:
-# Implement a hash-map, or multidimensional array for ease of app info keeping. Write it yourself if you have to.
-# Figure out what the hell is going on with "port clean all" vs "port clean installed" the 'clean' target is provided by this package
 
 package provide portclean 1.0
 
 package require portutil 1.0
-package require portrpm 1.0
 package require Pextlib 1.0
 
 set org.macports.clean [target_new org.macports.clean portclean::clean_main]
@@ -62,95 +51,6 @@ namespace eval portclean {
 }
 
 set_ui_prefix
-
-proc is_inactive {app} {
-
-    # Determine's whether an application is inactive or not.
-    # Args: 
-    #           app - An array where the fourth item in it is the activity of the application.
-    # Returns:
-    #           1 if inactive, 0 if active.
-
-    if {[lindex $app 4] == 0} {
-        return 1
-    }
-    return 0
-}
-
-proc get_info {} {
-
-    # Get's the information of all installed appliations (those returned by registry::instaled), and returns it in a
-    # multidimensional list.
-    #
-    # Args:
-    #           None
-    #Returns:
-    #           A multidimensional list where each app is a sublist, i.e., {{First Application Info} {Second Application Info} {...}}
-    #           Indexes of each sublist are: 0 = name, 1 = version, 2 = revision, 3 = variets, 4 = activity, and 5 = epoch.
-    
-    set installed_apps [registry::installed]
-    set app_info [list] 
-
-    foreach app $installed_apps {
-
-        set name     [lindex $app 0]
-        set version  [lindex $app 1]
-        set revision [lindex $app 2]
-        set varients [lindex $app 3]
-        set active   [lindex $app 4]
-        set epoch    [lindex $app 5]
-
-        lappend app_info [list $name $version $revision $varients $active $epoch]
-    }
-
-    return $app_info
-}
-
-proc delete_file {args} {
-
-    # Attempts to delete a given file, and catches the errors if there are any.
-    #
-    # Args:
-    #           args - The file path
-    # Returns:
-    #           None
-
-    ui_debug "Removing file: $args"
-    if {[catch {delete $args} result]} {
-        ui_debug "$::errorInfo"
-        ui_error "$result"
-    }
-}
-
-proc portclean::clean_inactive {} {
-
-    # Attempts to uninstall all inactive applications. (Performance is now O(N)!)
-    #
-    # Args: 
-    #           None
-    # Returns: 
-    #           0 if execution was successful.
-
-    set apps [get_info]
-    set inactive_count 0
-
-    foreach app $apps {
-
-        if { [is_inactive $app] } {
-            set name [lindex $app 0]
-            puts "Uninstalling: $name"
-            incr inactive_count
-
-            # Note: 'uninstall' takes a name, version, and an options list. 
-            registry_uninstall [lindex $app 0] [lindex $app 1] {}
-        }
-    }
-    if { $inactive_count == 0 } {
-        puts "Found no inactive ports."
-    }
-
-    return 0
-}
 
 proc portclean::clean_start {args} {
     global UI_PREFIX prefix
@@ -170,7 +70,6 @@ proc portclean::clean_main {args} {
     #           ports_clean_dist     - Determines whether to do 'port clean dist' or not. Set to 'yes' or 'no'.
     #           ports_clean_work     - Determines whether to do 'port clean work' or not. Set to 'yes' or 'no'.
     #           ports_clean_logs     - Determines whether to do 'port clean logs' or not. Set to 'yes' or 'no'.
-    #           ports_clean_inactive - Determines whether to do 'port clean inactive' or not. Set to 'yes' or 'no'.
     #           ports_clean_archive  - Determines whether to do 'port clean archive' or not. Set to 'yes' or 'no'.
     #           ports_clean_all      - Determines whether to do all 'port clean' operations. Set to 'yes' or 'no'.
     #           keeplogs             - Determines whether to do 'port clean logs' or not. Set to 'yes' or 'no'.
@@ -178,7 +77,7 @@ proc portclean::clean_main {args} {
     # Returns:
     #           None
 
-    global UI_PREFIX ports_clean_dist ports_clean_work ports_clean_logs ports_clean_inactive \
+    global UI_PREFIX ports_clean_dist ports_clean_work ports_clean_logs ports_clean_gsoc14 \
            ports_clean_archive ports_clean_all keeplogs usealtworkpath
 
     if {$usealtworkpath} {
@@ -208,13 +107,23 @@ proc portclean::clean_main {args} {
         && !$usealtworkpath} {
         clean_logs
     }
-
-    if {[info exists ports_clean_inactive] && $port_clean_inactive eq "yes" || \
-        [info exists ports_clean_all] && $port_clean_all eq "yes"} {
-            clean_inactive
-    }
-
     return 0
+}
+
+proc delete_file {args} {
+
+    # Attempts to delete a given file, and catches the errors if there are any.
+    #
+    # Args:
+    #           args - The file path
+    # Returns:
+    #           None
+
+    ui_debug "Removing file: $args"
+    if {[catch {delete $args} result]} {
+        ui_debug "$::errorInfo"
+        ui_error "$result"
+    }
 }
 
 #
