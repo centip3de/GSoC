@@ -14,7 +14,6 @@
 
 package provide reclaim 1.0
 package require macports
-package require portfetch 1.0
 
 namespace eval reclaim {
 }
