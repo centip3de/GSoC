@@ -3,6 +3,9 @@
 # TODO:
 # Add distfile version checking.
 # Remove the useless/structure comments and add actual docstrings.
+# Pretty sure we should be using ui_msg, instead of puts and what not. Should probably add that.
+# Add test cases
+# Add copyright notice
 
 # Finished:
 # Register the "port cleanup" command with port.tcl and all that involves.
@@ -10,13 +13,80 @@
 # Figure out what the hell is going on with "port clean all" vs "port clean installed" the 'clean' target is provided by this package
 
 package provide reclaim 1.0
+package require macports
+package require portfetch 1.0
 
 namespace eval reclaim {
 }
 
 proc reclaim::main {args} {
+
+    # The main function. Calls each individual function that needs to be run.
+    # Args: 
+    #           None
+    # Returns:
+    #           None
+
     uninstall_inactive
+    check_distfiles
 }
+
+proc walk_files {dir delete} {
+
+    # Recursively walk through each item in the given directory and if requested, delete each file that isn't a directory.
+    # Args:
+    #           dir    - A string path of the given directory to walk through
+    #           delete - Whether to delete each file found that isn't a directory or not. Set to 'yes' or 'no'. 
+    # Returns: 
+    #           None
+
+    foreach item [readdir $dir] {
+
+        set currentPath [file join $dir $item]
+
+        if {[file isdirectory $currentPath]} {
+            walk_files $currentPath $delete 
+
+        } else {
+            puts "Found distfile: $item"
+
+            if {$delete eq "yes"} {
+                set path [file join $dir $item]
+                puts "Removing distfile: $item"
+
+                #Because we're only deleting files (not directories) that we know exist, if there was an error, it's because of lack of root privledges.
+                if {[catch {file delete $path} result]} { 
+                    elevateToRoot "reclaim"
+                    file delete $path
+                }
+            }
+        }
+    }
+}
+
+proc check_distfiles {} {
+
+    # Check for distfiles in both the root, and home directories. If found, delete them.
+    # Args:
+    #               None
+    #
+    # Returns:
+    #               0 on successful execution
+
+    global macports::portdbpath
+    global macports::user_home
+
+    # The root and home distfile folder locations, respectively. 
+    set root [file join ${macports::portdbpath} distfiles]
+    set home ${macports::user_home}/.macports$root
+
+    # Walk through each directory, and delete any files found.
+    walk_files $root yes
+    walk_files $home yes
+
+    # Returning 0 is in style this year. 
+    return 0
+} 
 
 proc is_inactive {app} {
 
@@ -61,7 +131,7 @@ proc get_info {} {
     return $app_info
 }
 
-proc reclaim::uninstall_inactive {} {
+proc uninstall_inactive {} {
 
     # Attempts to uninstall all inactive applications. (Performance is now O(N)!)
     #
