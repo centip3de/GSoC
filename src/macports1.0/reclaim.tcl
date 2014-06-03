@@ -30,13 +30,13 @@ proc reclaim::main {args} {
     remove_distfiles
 }
 
-proc walk_files {dir delete dist_files} {
+proc walk_files {dir delete dist_paths} {
 
     # Recursively walk through each directory that isn't an installed port and if delete each file that isn't a directory if requested.
     # Args:
     #           dir             - A string path of the given directory to walk through
     #           delete          - Whether to delete each file found that isn't a directory or not. Set to 'yes' or 'no'. 
-    #           dist_files      - A list of the names of all distfiles from installed ports  
+    #           dist_paths      - A list of the full paths for all distfiles from installed ports  
     # Returns: 
     #           'no' if no distfiles were found, and 'yes' if distfiles were found. 
 
@@ -47,24 +47,23 @@ proc walk_files {dir delete dist_files} {
         set currentPath [file join $dir $item]
 
         if {[file isdirectory $currentPath]} {
-            walk_files $currentPath $delete $dist_files
+            walk_files $currentPath $delete $dist_paths
 
         } else {
-
-            # Only care about files that exist in /distfiles that are not a distfile from an installed file.
-            if {[lsearch $dist_files $item] == -1} {
-
-                puts "Found distfile: $item"
+            
+            if {[lsearch $dist_paths $currentPath] == -1} {
                 set found_distfile yes
 
-                if {$delete eq "yes"} {
-                    set path [file join $dir $item]
+                # Only care about files that exist in /distfiles that are not a distfile from an installed file.
+                puts "Found distfile: $item"
+
+                if {$delete eq "yes" && $item ne ".DS_Store"} {
                     puts "Removing distfile: $item"
 
                     # Because we're only deleting files (not directories) that we know exist, if there was an error, it's because of lack of root privledges.
-                    if {[catch {file delete $path} result]} { 
+                    if {[catch {file delete $currentPath} result]} { 
                         elevateToRoot "reclaim"
-                        file delete $path
+                        file delete $currentPath
                     }
                 }
             }
@@ -89,8 +88,8 @@ proc remove_distfiles {} {
     set root_dist       [file join ${macports::portdbpath} distfiles]
     set home_dist       ${macports::user_home}/.macports$root_dist
 
-    set port_info [get_info]
-    set dist_names [list]
+    set port_info    [get_info]
+    set dist_path    [list]
 
     foreach port $port_info {
 
@@ -101,19 +100,29 @@ proc remove_distfiles {} {
         set workername [ditem_key $mport workername]
 
         # Append that port's distfiles to the list
-        lappend dist_names [$workername eval return \$distfiles]
+        set subdir [$workername eval return \$dist_subdir]
+        set name   [$workername eval return \$distfiles]
 
+        set root_path [file join $root_dist $subdir $name]
+        set home_path [file join $home_dist $subdir $name]
+
+        # Add the full file path to the list, depending where it's located.
+        if {[file isfile $root_path]} {
+            lappend dist_path $root_path
+
+        } else {
+            if {[file isfile $home_path]} {
+                lappend dist_path $home_path
+            }
+        }
     }
 
-    # Don't flag .DS_Store, yo
-    lappend dist_names ".DS_Store"
-
     # Walk through each directory, and delete any files found. Alert the user if no files were found.
-    if {[walk_files $root_dist yes $dist_names] eq "no"} {
+    if {[walk_files $root_dist yes $dist_path] eq "no"} {
         puts "No distfiles found in root directory."
     }
 
-    if {[walk_files $home_dist yes $dist_names] eq "no"} {
+    if {[walk_files $home_dist yes $dist_path] eq "no"} {
         puts "No distfiles found in home directory."
     }
 
