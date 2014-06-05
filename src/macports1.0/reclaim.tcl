@@ -30,7 +30,7 @@ proc reclaim::main {args} {
     remove_distfiles
 }
 
-proc walk_files {dir delete dist_paths} {
+proc reclaim::walk_files {dir delete dist_paths} {
 
     # Recursively walk through each directory that isn't an installed port and if delete each file that isn't a directory if requested.
     # Args:
@@ -73,7 +73,7 @@ proc walk_files {dir delete dist_paths} {
     return $found_distfile
 }
 
-proc remove_distfiles {} {
+proc reclaim::remove_distfiles {} {
 
     # Check for distfiles in both the root, and home directories. If found, delete them.
     # Args:
@@ -129,7 +129,7 @@ proc remove_distfiles {} {
     return 0
 } 
 
-proc is_inactive {app} {
+proc reclaim::is_inactive {app} {
 
     # Determine's whether an application is inactive or not.
     # Args: 
@@ -143,7 +143,7 @@ proc is_inactive {app} {
     return 0
 }
 
-proc get_info {} {
+proc reclaim::get_info {} {
 
     # Get's the information of all installed appliations (those returned by registry::instaled), and returns it in a
     # multidimensional list.
@@ -172,7 +172,7 @@ proc get_info {} {
     return $app_info
 }
 
-proc uninstall_inactive {} {
+proc reclaim::uninstall_inactive {} {
 
     # Attempts to uninstall all inactive applications. (Performance is now O(N)!)
     #
