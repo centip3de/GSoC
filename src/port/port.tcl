@@ -4338,7 +4338,7 @@ array set cmd_opts_array {
     install     {no-rev-upgrade unrequested}
     uninstall   {follow-dependents follow-dependencies no-exec}
     variants    {index}
-    clean       {all archive dist work logs gsoc14}
+    clean       {all archive dist work logs}
     mirror      {new}
     lint        {nitpick}
     select      {list set show summary}
