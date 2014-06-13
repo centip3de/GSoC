@@ -2733,7 +2733,7 @@ proc action_upgrade { action portlist opts } {
 }
 
 proc action_reclaim { action portlist opts } {
-    reclaim::main 
+    macports::reclaim_main  
     return 0
 }
 

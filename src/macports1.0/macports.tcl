@@ -36,6 +36,7 @@
 package provide macports 1.0
 package require macports_dlist 1.0
 package require macports_util 1.0
+package require reclaim 1.0
 package require Tclx
 
 namespace eval macports {
@@ -4361,6 +4362,11 @@ proc macports::arch_runnable {arch} {
         }
     }
     return yes
+}
+
+proc macports::reclaim_main {} {
+    reclaim::main
+    return 0
 }
 
 proc macports::revupgrade {opts} {
