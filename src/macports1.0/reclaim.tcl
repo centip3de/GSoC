@@ -3,16 +3,17 @@
 # TODO:
 # Add distfile version checking.
 # Remove the useless/structure comments and add actual docstrings.
-# Pretty sure we should be using ui_msg, instead of puts and what not. Should probably add that.
 # Add test cases
 # Add copyright notice
 
 # Finished:
+# Pretty sure we should be using ui_msg, instead of puts and what not. Should probably add that.
 # Register the "port cleanup" command with port.tcl and all that involves.
 # Implement a hash-map, or multidimensional array for ease of app info keeping. Write it yourself if you have to.
 # Figure out what the hell is going on with "port clean all" vs "port clean installed" the 'clean' target is provided by this package
 
 package provide reclaim 1.0
+package require registry_uninstall 2.0
 package require macports
 
 namespace eval reclaim {
@@ -42,6 +43,7 @@ proc reclaim::walk_files {dir delete dist_paths} {
 
     set found_distfile no 
 
+
     foreach item [readdir $dir] {
 
         set currentPath [file join $dir $item]
@@ -55,14 +57,13 @@ proc reclaim::walk_files {dir delete dist_paths} {
                 set found_distfile yes
 
                 # Only care about files that exist in /distfiles that are not a distfile from an installed file.
-                puts "Found distfile: $item"
+                ui_msg "Found distfile: $item"
 
-                if {$delete eq "yes" && $item ne ".DS_Store"} {
-                    puts "Removing distfile: $item"
+                if {$delete eq "yes"} {
+                    ui_msg "Removing distfile: $item"
 
                     # Because we're only deleting files (not directories) that we know exist, if there was an error, it's because of lack of root privledges.
                     if {[catch {file delete $currentPath} result]} { 
-                        elevateToRoot "reclaim"
                         file delete $currentPath
                     }
                 }
@@ -119,12 +120,12 @@ proc reclaim::remove_distfiles {} {
 
     # Walk through each directory, and delete any files found. Alert the user if no files were found.
     if {[walk_files $root_dist yes $dist_path] eq "no"} {
-        puts "No distfiles found in root directory."
+        ui_msg "No distfiles found in root directory."
     }
 
-    if {[walk_files $home_dist yes $dist_path] eq "no"} {
-        puts "No distfiles found in home directory."
-    }
+    #if {[walk_files $home_dist yes $dist_path] eq "no"} {
+    #    ui_msg "No distfiles found in home directory."
+    #}
 
     return 0
 } 
@@ -145,31 +146,16 @@ proc reclaim::is_inactive {app} {
 
 proc reclaim::get_info {} {
 
-    # Get's the information of all installed appliations (those returned by registry::instaled), and returns it in a
+    # Get's the information of all installed appliations (those returned by registry::installed), and returns it in a
     # multidimensional list.
     #
     # Args:
     #           None
     #Returns:
     #           A multidimensional list where each app is a sublist, i.e., {{First Application Info} {Second Application Info} {...}}
-    #           Indexes of each sublist are: 0 = name, 1 = version, 2 = revision, 3 = variets, 4 = activity, and 5 = epoch.
+    #           Indexes of each sublist are: 0 = name, 1 = version, 2 = revision, 3 = variants, 4 = activity, and 5 = epoch.
     
-    set installed_apps [registry::installed]
-    set app_info [list] 
-
-    foreach app $installed_apps {
-
-        set name     [lindex $app 0]
-        set version  [lindex $app 1]
-        set revision [lindex $app 2]
-        set varients [lindex $app 3]
-        set active   [lindex $app 4]
-        set epoch    [lindex $app 5]
-
-        lappend app_info [list $name $version $revision $varients $active $epoch]
-    }
-
-    return $app_info
+    return [registry::installed] 
 }
 
 proc reclaim::uninstall_inactive {} {
@@ -188,15 +174,15 @@ proc reclaim::uninstall_inactive {} {
 
         if { [is_inactive $app] } {
             set name [lindex $app 0]
-            puts "Uninstalling: $name"
+            ui_msg "Uninstalling: $name"
             incr inactive_count
 
             # Note: 'uninstall' takes a name, version, and an options list. 
-            registry_uninstall [lindex $app 0] [lindex $app 1] {}
+            registry_uninstall::uninstall [lindex $app 0] [lindex $app 1] [lindex $app 2] [lindex $app 3] {}
         }
     }
     if { $inactive_count == 0 } {
-        puts "Found no inactive ports."
+        ui_msg "Found no inactive ports."
     }
 
     return 0
