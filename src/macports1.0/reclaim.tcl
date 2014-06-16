@@ -152,7 +152,7 @@ proc reclaim::get_info {} {
     # Args:
     #           None
     #Returns:
-    #           A multidimensional list where each app is a sublist, i.e., {{First Application Info} {Second Application Info} {...}}
+    #           A multidimensional list where each app is a sublist, i.e., [{First Application Info} {Second Application Info} {...}]
     #           Indexes of each sublist are: 0 = name, 1 = version, 2 = revision, 3 = variants, 4 = activity, and 5 = epoch.
     
     return [registry::installed] 
@@ -165,26 +165,44 @@ proc reclaim::uninstall_inactive {} {
     # Args: 
     #           None
     # Returns: 
-    #           0 if execution was successful.
+    #           0 if execution was successful. Errors (for now) if execution wasn't. 
 
-    set apps [get_info]
-    set inactive_count 0
+    set apps            [get_info]
+    set inactive_apps   [list]
+    set inactive_names  [list]
+    set inactive_count  0
 
     foreach app $apps {
 
         if { [is_inactive $app] } {
-            set name [lindex $app 0]
-            ui_msg "Uninstalling: $name"
+            lappend inactive_apps $app
+            lappend inactive_names [lindex $app 0]
             incr inactive_count
-
-            # Note: 'uninstall' takes a name, version, and an options list. 
-            registry_uninstall::uninstall [lindex $app 0] [lindex $app 1] [lindex $app 2] [lindex $app 3] {}
         }
     }
     if { $inactive_count == 0 } {
         ui_msg "Found no inactive ports."
-    }
 
+    } else {
+
+        ui_msg "Found inactive ports: $inactive_names."
+        ui_msg "Would you like to uninstall these apps? \[Y/N\]: "
+        set input [gets stdin]
+
+        if {$input eq "Y" || $input eq "y" } {
+
+            foreach app $inactive_apps {
+                set name [lindex $app 0]
+                ui_msg "Uninstalling: $name"
+                incr inactive_count
+
+                # Note: 'uninstall' takes a name, version, and an options list. 
+                registry_uninstall::uninstall [lindex $app 0] [lindex $app 1] [lindex $app 2] [lindex $app 3] {}
+            }
+        } else {
+            ui_msg "Not uninstalling applications."
+        }
+    }
     return 0
 }
 
