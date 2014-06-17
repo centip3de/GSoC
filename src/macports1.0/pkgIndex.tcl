@@ -12,3 +12,4 @@ package ifneeded macports 1.0 [list load [file join $dir MacPorts.dylib]]\n[list
 package ifneeded macports_dlist 1.0 [list source [file join $dir macports_dlist.tcl]]
 package ifneeded macports_util 1.0 [list source [file join $dir macports_util.tcl]]
 package ifneeded reclaim 1.0 [list source [file join $dir reclaim.tcl]]
+package ifneeded doctor 1.0 [list source [file join $dir doctor.tcl]]

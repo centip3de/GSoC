@@ -44,7 +44,6 @@ if {![catch {package require term::ansi::send}]} {
 }
 
 package require macports
-package require reclaim 1.0
 package require Pextlib 1.0
 
 # Standard procedures
@@ -2732,6 +2731,11 @@ proc action_upgrade { action portlist opts } {
     return $status
 }
 
+proc action_doctor { action portlist opts } {
+    macports::doctor_main
+    return 0
+}
+
 proc action_reclaim { action portlist opts } {
     macports::reclaim_main  
     return 0
@@ -4183,6 +4187,7 @@ array set action_array [list \
     upgrade     [list action_upgrade        [ACTION_ARGS_PORTS]] \
     rev-upgrade [list action_revupgrade     [ACTION_ARGS_NONE]] \
     reclaim     [list action_reclaim        [ACTION_ARGS_NONE]] \
+    doctor      [list action_doctor         [ACTION_ARGS_NONE]] \
     \
     version     [list action_version        [ACTION_ARGS_NONE]] \
     platform    [list action_platform       [ACTION_ARGS_NONE]] \
