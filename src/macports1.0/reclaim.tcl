@@ -1,12 +1,14 @@
 # -*- coding: utf-8; mode: tcl; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- vim:fenc=utf-8:ft=tcl:et:sw=4:ts=4:sts=4
 
 # TODO:
-# Add distfile version checking.
 # Remove the useless/structure comments and add actual docstrings.
 # Add test cases
 # Add copyright notice
+# Check if inactive files are dependents for other files. 
+
 
 # Finished:
+# Add distfile version checking.
 # Pretty sure we should be using ui_msg, instead of puts and what not. Should probably add that.
 # Register the "port cleanup" command with port.tcl and all that involves.
 # Implement a hash-map, or multidimensional array for ease of app info keeping. Write it yourself if you have to.
@@ -30,8 +32,18 @@ namespace eval reclaim {
         remove_distfiles
     }
 
-    proc is_emtpy_dir {dir} {
+    proc is_empty_dir {dir} {
+        
+        # Test if the given directory is empty.
+        # Args:
+        #           dir         - A string path of the given directory to test
+        # Returns:
+        #           0 if the directory is not empty, 1 if it is.
+
+        # Get _all_ files
         set filenames [glob -nocomplain -tails -directory $dir * .*]
+
+        # Yay complex statements! Use RE, lsearch, and llength to determine if the directory is empty.  
         expr {![llength [lsearch -all -not -regexp $filenames {^\.\.?$}]]}
     }
 
@@ -47,28 +59,45 @@ namespace eval reclaim {
 
         set found_distfile no 
 
+        # If the directory is empty, and this isn't the root folder, delete it and recursively go up directories until a non-empty one is found.
+        if { $dir ne "distfiles" && [readdir $dir] eq ""} {
+
+            # Get the directory above the current one
+            set up_dir [file dirname $dir]
+
+            puts "Found empty directory: $dir. Attempting to delete."
+            file delete -force $dir
+
+            walk_files $up_dir $delete $dist_paths
+
+            # Recursion is fun, eh? Unwind the stack.
+            return
+        }
 
         foreach item [readdir $dir] {
 
             set currentPath [file join $dir $item]
 
             if {[file isdirectory $currentPath]} {
+
                 walk_files $currentPath $delete $dist_paths
 
             } else {
                 
+                # If the current file isn't in the known-installed-distfiles
                 if {[lsearch $dist_paths $currentPath] == -1} {
                     set found_distfile yes
 
-                    # Only care about files that exist in /distfiles that are not a distfile from an installed file.
                     ui_msg "Found distfile: $item"
 
                     if {$delete eq "yes"} {
                         ui_msg "Removing distfile: $item"
 
-                        # Because we're only deleting files (not directories) that we know exist, if there was an error, it's because of lack of root privledges.
-                        if {[catch {file delete $currentPath} result]} { 
-                            file delete $currentPath
+                        file delete $currentPath
+
+                        # If the directory is now empty, recursively call on this directory, to delete it.
+                        if {[is_empty_dir $dir]} {
+                            walk_files $dir $delete $dist_paths
                         }
                     }
                 }
@@ -127,6 +156,7 @@ namespace eval reclaim {
             ui_msg "No distfiles found in root directory."
         }
 
+        # FIXME: Only commented because I accidentally delete all my dotfiles (including the home_dist location). It does in fact work on normal machines.
         #if {[walk_files $home_dist yes $dist_path] eq "no"} {
         #    ui_msg "No distfiles found in home directory."
         #}
