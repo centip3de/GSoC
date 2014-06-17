@@ -30,6 +30,11 @@ namespace eval reclaim {
         remove_distfiles
     }
 
+    proc is_emtpy_dir {dir} {
+        set filenames [glob -nocomplain -tails -directory $dir * .*]
+        expr {![llength [lsearch -all -not -regexp $filenames {^\.\.?$}]]}
+    }
+
     proc walk_files {dir delete dist_paths} {
 
         # Recursively walk through each directory that isn't an installed port and if delete each file that isn't a directory if requested.
