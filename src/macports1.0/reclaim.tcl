@@ -30,6 +30,7 @@ namespace eval reclaim {
 
         uninstall_inactive
         remove_distfiles
+        update_last_run
     }
 
     proc is_empty_dir {dir} {
@@ -65,7 +66,7 @@ namespace eval reclaim {
             # Get the directory above the current one
             set up_dir [file dirname $dir]
 
-            puts "Found empty directory: $dir. Attempting to delete."
+            ui_msg "Found empty directory: $dir. Attempting to delete."
             file delete -force $dir
 
             walk_files $up_dir $delete $dist_paths
@@ -185,11 +186,51 @@ namespace eval reclaim {
         #
         # Args:
         #           None
-        #Returns:
+        # Returns:
         #           A multidimensional list where each app is a sublist, i.e., [{First Application Info} {Second Application Info} {...}]
         #           Indexes of each sublist are: 0 = name, 1 = version, 2 = revision, 3 = variants, 4 = activity, and 5 = epoch.
         
         return [registry::installed] 
+    }
+
+    proc update_last_run {} {
+        
+        # Updates the last_reclaim textfile with the newest time the code has been ran. 
+        #
+        # Args:
+        #           None
+        # Returns:
+        #           None
+
+        set path    [file join ${macports::portdbpath} last_reclaim.txt]
+        set fd      [open $path w]
+        puts $fd    [clock seconds]
+        close $fd
+    }
+
+    proc check_last_run {} {
+
+        # Periodically warn's the user that they haven't run 'port reclaim' in two weeks, and that they should consider doing so.
+        # 
+        # Args:
+        #           None
+        # Returns: 
+        #           None
+
+        set path    [file join ${macports::portdbpath} last_reclaim.txt]
+
+        if {[file exists $path]} {
+
+            set fd      [open $path r]
+            set time    [gets $fd]
+            close $fd
+
+            if {$time ne ""} {
+                if {[clock seconds] - $time > 1209600} {
+                    ui_warn "you haven't run 'port reclaim' in two weeks. It's recommended you run this once every two weeks to help save space on your computer."
+                }
+            }
+        }
     }
 
     proc uninstall_inactive {} {

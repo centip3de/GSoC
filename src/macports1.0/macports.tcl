@@ -1191,6 +1191,9 @@ proc mportinit {{up_ui_options {}} {up_options {}} {up_variations {}}} {
         }
     }
 
+    # Check the last time 'reclaim' was run. 
+    check_last_reclaim 
+
     # init registry
     set db_path [file join ${registry.path} registry registry.db]
     set db_exists [file exists $db_path]
@@ -4366,11 +4369,40 @@ proc macports::arch_runnable {arch} {
 }
 
 proc macports::doctor_main {} {
+    
+    # Calls the main function for the 'port doctor' command.
+    #
+    # Args: 
+    #           None
+    # Returns:
+    #           0 on successful execution.
+
     doctor::main
     return 0
 }
 
+proc macports::check_last_reclaim {} {
+
+    # An abstraction layer for the reclaim function, 'check_last_run'.
+    #
+    # Args:
+    #           None
+    # Returns:
+    #           None
+
+    reclaim::check_last_run
+    return 0
+}
+
 proc macports::reclaim_main {} {
+
+    # Calls the main function for the 'port reclaim' command.
+    #
+    # Args:
+    #           None
+    # Returns:
+    #           None
+
     reclaim::main
     return 0
 }
