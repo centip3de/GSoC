@@ -1192,7 +1192,7 @@ proc mportinit {{up_ui_options {}} {up_options {}} {up_variations {}}} {
     }
 
     # Check the last time 'reclaim' was run. 
-    check_last_reclaim 
+    macports::check_last_reclaim 
 
     # init registry
     set db_path [file join ${registry.path} registry registry.db]
