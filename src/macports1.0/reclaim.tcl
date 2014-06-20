@@ -61,7 +61,7 @@ namespace eval reclaim {
         set found_distfile no 
 
         # If the directory is empty, and this isn't the root folder, delete it and recursively go up directories until a non-empty one is found.
-        if { $dir ne "distfiles" && [readdir $dir] eq ""} {
+        if { $dir ne "/opt/local/var/macports/distfiles" && [readdir $dir] eq ""} {
 
             # Get the directory above the current one
             set up_dir [file dirname $dir]
