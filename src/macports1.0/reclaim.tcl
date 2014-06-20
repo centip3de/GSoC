@@ -2,12 +2,12 @@
 
 # TODO:
 # Remove the useless/structure comments and add actual docstrings.
-# Add test cases
 # Add copyright notice
-# Check if inactive files are dependents for other files. 
 
 
 # Finished:
+# Check if inactive files are dependents for other files. 
+# Add test cases
 # Add distfile version checking.
 # Pretty sure we should be using ui_msg, instead of puts and what not. Should probably add that.
 # Register the "port cleanup" command with port.tcl and all that involves.
@@ -15,6 +15,7 @@
 # Figure out what the hell is going on with "port clean all" vs "port clean installed" the 'clean' target is provided by this package
 
 package provide reclaim 1.0
+
 package require registry_uninstall 2.0
 package require macports
 
@@ -128,8 +129,13 @@ namespace eval reclaim {
 
         foreach port $port_info {
 
+            set name        [lindex $port 0]
+            set version     [lindex $port 1]
+            set revision    [lindex $port 2]
+            set variants    [lindex $port 3]
+
             # Get mport reference
-            set mport [mportopen_installed [lindex $port 0] [lindex $port 1] [lindex $port 2] [lindex $port 3] {}]
+            set mport [mportopen_installed $name $version $revision $variants {}]
 
             # Setup sub-Tcl-interpreter that executed the installed port
             set workername [ditem_key $mport workername]
@@ -255,23 +261,44 @@ namespace eval reclaim {
                 incr inactive_count
             }
         }
+
         if { $inactive_count == 0 } {
             ui_msg "Found no inactive ports."
 
         } else {
 
+            # Get user input on whether to uninstall applications or not
             ui_msg "Found inactive ports: $inactive_names."
             ui_msg "Would you like to uninstall these apps? \[Y/N\]: "
+
             set input [gets stdin]
 
+            # If it was a yes, uninstall
             if {$input eq "Y" || $input eq "y" } {
 
                 foreach app $inactive_apps {
-                    set name [lindex $app 0]
-                    ui_msg "Uninstalling: $name"
-                    incr inactive_count
 
-                    # Note: 'uninstall' takes a name, version, and an options list. 
+                    set name [lindex $app 0]
+
+                    # Get all dependents for the current application
+                    set dependents [registry::list_dependents $name [lindex 1] [lindex 2] [lindex 3]]
+
+                    # If there were dependents, ask if the /really/ want to uninstall it. 
+                    if {dependents ne ""} {
+
+                        ui_warn "the following application ($name) is a dependent for $dependents. Are you positive you'd like to uninstall this 
+                                 (this could break other applications)? \[Y/N\]"
+
+                        set input [gets stdin]
+
+                        if { $input eq "N" || "n" } {
+                            ui_msg "Skipping application."
+                            continue
+                        }
+                    }
+                    ui_msg "Uninstalling: $name"
+
+                    # Note: 'uninstall' takes a name, version, revision, variants and an options list. 
                     registry_uninstall::uninstall [lindex $app 0] [lindex $app 1] [lindex $app 2] [lindex $app 3] {}
                 }
             } else {
