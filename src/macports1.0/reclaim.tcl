@@ -1,11 +1,45 @@
-# -*- coding: utf-8; mode: tcl; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- vim:fenc=utf-8:ft=tcl:et:sw=4:ts=4:sts=4
+# -*- coding: utf-8; mode: tcl; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- vim:fenc=utf-8:filetype=tcl:et:sw=4:ts=4:sts=4
+# reclaim.tcl
+# $Id: macports.tcl 119177 2014-04-18 22:35:29Z cal@macports.org $
+#
+# Copyright (c) 2002 - 2003 Apple Inc.
+# Copyright (c) 2004 - 2005 Paul Guyot, <pguyot@kallisys.net>.
+# Copyright (c) 2004 - 2006 Ole Guldberg Jensen <olegb@opendarwin.org>.
+# Copyright (c) 2004 - 2005 Robert Shaw <rshaw@opendarwin.org>
+# Copyright (c) 2004 - 2014 The MacPorts Project
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of Apple Inc. nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 
 # TODO:
-# Remove the useless/structure comments and add actual docstrings.
-# Add copyright notice
-
+# Add ui_debug statments
+# Catch some error-prone areas.
 
 # Finished:
+# Remove the useless/structure comments and add actual docstrings.
+# Add copyright notice
 # Check if inactive files are dependents for other files. 
 # Add test cases
 # Add distfile version checking.
@@ -64,7 +98,6 @@ namespace eval reclaim {
         # If the directory is empty, and this isn't the root folder, delete it and recursively go up directories until a non-empty one is found.
         if { $dir ne "/opt/local/var/macports/distfiles" && [readdir $dir] eq ""} {
 
-            # Get the directory above the current one
             set up_dir [file dirname $dir]
 
             ui_msg "Found empty directory: $dir. Attempting to delete."
@@ -72,20 +105,16 @@ namespace eval reclaim {
 
             walk_files $up_dir $delete $dist_paths
 
-            # Recursion is fun, eh? Unwind the stack.
             return
         }
 
         foreach item [readdir $dir] {
-
             set currentPath [file join $dir $item]
 
             if {[file isdirectory $currentPath]} {
-
                 walk_files $currentPath $delete $dist_paths
 
             } else {
-                
                 # If the current file isn't in the known-installed-distfiles
                 if {[lsearch $dist_paths $currentPath] == -1} {
                     set found_distfile yes
@@ -105,7 +134,6 @@ namespace eval reclaim {
                 }
             }
         }
-
         return $found_distfile
     }
 
@@ -267,13 +295,10 @@ namespace eval reclaim {
 
         } else {
 
-            # Get user input on whether to uninstall applications or not
             ui_msg "Found inactive ports: $inactive_names."
             ui_msg "Would you like to uninstall these apps? \[Y/N\]: "
 
             set input [gets stdin]
-
-            # If it was a yes, uninstall
             if {$input eq "Y" || $input eq "y" } {
 
                 foreach app $inactive_apps {
@@ -283,9 +308,7 @@ namespace eval reclaim {
                     # Get all dependents for the current application
                     set dependents [registry::list_dependents $name [lindex 1] [lindex 2] [lindex 3]]
 
-                    # If there were dependents, ask if the /really/ want to uninstall it. 
                     if {dependents ne ""} {
-
                         ui_warn "the following application ($name) is a dependent for $dependents. Are you positive you'd like to uninstall this 
                                  (this could break other applications)? \[Y/N\]"
 
