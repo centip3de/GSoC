@@ -35,9 +35,9 @@
 
 # TODO:
 # Add ui_debug statments
-# Catch some error-prone areas.
 
 # Finished:
+# Catch some error-prone areas.
 # Remove the useless/structure comments and add actual docstrings.
 # Add copyright notice
 # Check if inactive files are dependents for other files. 
@@ -101,20 +101,25 @@ namespace eval reclaim {
             set up_dir [file dirname $dir]
 
             ui_msg "Found empty directory: $dir. Attempting to delete."
-            file delete -force $dir
+
+            if {[catch {file delete -force $dir} error] } {
+                ui_error "something went wrong when trying to delete $dir"
+            }
 
             walk_files $up_dir $delete $dist_paths
-
             return
         }
 
         foreach item [readdir $dir] {
+
             set currentPath [file join $dir $item]
 
             if {[file isdirectory $currentPath]} {
+
                 walk_files $currentPath $delete $dist_paths
 
             } else {
+                
                 # If the current file isn't in the known-installed-distfiles
                 if {[lsearch $dist_paths $currentPath] == -1} {
                     set found_distfile yes
@@ -124,7 +129,9 @@ namespace eval reclaim {
                     if {$delete eq "yes"} {
                         ui_msg "Removing distfile: $item"
 
-                        file delete $currentPath
+                        if {[catch {file delete $currentPath} error]} {
+                            ui_error "something went wrong when trying to delete $currentPath"
+                        }
 
                         # If the directory is now empty, recursively call on this directory, to delete it.
                         if {[is_empty_dir $dir]} {
@@ -134,6 +141,7 @@ namespace eval reclaim {
                 }
             }
         }
+
         return $found_distfile
     }
 
@@ -163,7 +171,9 @@ namespace eval reclaim {
             set variants    [lindex $port 3]
 
             # Get mport reference
-            set mport [mportopen_installed $name $version $revision $variants {}]
+            if {[catch {set mport [mportopen_installed $name $version $revision $variants {}]} error]} {
+                ui_error "something went wrong when trying to get an mport reference."
+            }
 
             # Setup sub-Tcl-interpreter that executed the installed port
             set workername [ditem_key $mport workername]
@@ -199,6 +209,19 @@ namespace eval reclaim {
         return 0
     } 
 
+    proc close_file {file} {
+
+        # Closes the file, handling error catching if needed.
+        #
+        # Args: 
+        #           file - The file handler
+        # Returns:
+        #           None
+        if {[catch {close $file} error]} {
+            ui_error "something went wrong when closing file, $file."
+        }
+    }
+
     proc is_inactive {app} {
 
         # Determine's whether an application is inactive or not.
@@ -224,7 +247,7 @@ namespace eval reclaim {
         #           A multidimensional list where each app is a sublist, i.e., [{First Application Info} {Second Application Info} {...}]
         #           Indexes of each sublist are: 0 = name, 1 = version, 2 = revision, 3 = variants, 4 = activity, and 5 = epoch.
         
-        return [registry::installed] 
+        return [registry::installed]
     }
 
     proc update_last_run {} {
@@ -239,7 +262,7 @@ namespace eval reclaim {
         set path    [file join ${macports::portdbpath} last_reclaim.txt]
         set fd      [open $path w]
         puts $fd    [clock seconds]
-        close $fd
+        close_file $fd
     }
 
     proc check_last_run {} {
@@ -257,7 +280,7 @@ namespace eval reclaim {
 
             set fd      [open $path r]
             set time    [gets $fd]
-            close $fd
+            close_file $fd
 
             if {$time ne ""} {
                 if {[clock seconds] - $time > 1209600} {
@@ -306,9 +329,12 @@ namespace eval reclaim {
                     set name [lindex $app 0]
 
                     # Get all dependents for the current application
-                    set dependents [registry::list_dependents $name [lindex 1] [lindex 2] [lindex 3]]
+                    if {[catch {set dependents [registry::list_dependents $name [lindex 1] [lindex 2] [lindex 3]]} error]} {
+                        ui_error "something went wrong when trying to enumerate all dependents for $name"
+                    }
 
                     if {dependents ne ""} {
+
                         ui_warn "the following application ($name) is a dependent for $dependents. Are you positive you'd like to uninstall this 
                                  (this could break other applications)? \[Y/N\]"
 
@@ -322,7 +348,9 @@ namespace eval reclaim {
                     ui_msg "Uninstalling: $name"
 
                     # Note: 'uninstall' takes a name, version, revision, variants and an options list. 
-                    registry_uninstall::uninstall [lindex $app 0] [lindex $app 1] [lindex $app 2] [lindex $app 3] {}
+                    if {[catch {registry_uninstall::uninstall $name [lindex $app 1] [lindex $app 2] [lindex $app 3] {}} error]} {
+                        ui_error "something went wrong when uninstalling $name"
+                    }
                 }
             } else {
                 ui_msg "Not uninstalling applications."
