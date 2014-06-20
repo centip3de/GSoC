@@ -34,9 +34,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # TODO:
-# Add ui_debug statments
 
 # Finished:
+# Add ui_debug statments
 # Catch some error-prone areas.
 # Remove the useless/structure comments and add actual docstrings.
 # Add copyright notice
@@ -127,6 +127,8 @@ namespace eval reclaim {
                     ui_msg "Found distfile: $item"
 
                     if {$delete eq "yes"} {
+
+                        ui_debug "Deleting file: $item"
                         ui_msg "Removing distfile: $item"
 
                         if {[catch {file delete $currentPath} error]} {
@@ -135,6 +137,8 @@ namespace eval reclaim {
 
                         # If the directory is now empty, recursively call on this directory, to delete it.
                         if {[is_empty_dir $dir]} {
+
+                            ui_debug "Current directory is empty. Walking to $dir"
                             walk_files $dir $delete $dist_paths
                         }
                     }
@@ -187,20 +191,25 @@ namespace eval reclaim {
 
             # Add the full file path to the list, depending where it's located.
             if {[file isfile $root_path]} {
+                ui_debug "Appending $root_path."
                 lappend dist_path $root_path
 
             } else {
                 if {[file isfile $home_path]} {
+                    ui_debug "Appending $home_path"
                     lappend dist_path $home_path
                 }
             }
         }
+
+        ui_debug "Calling walk_files on root directory."
 
         # Walk through each directory, and delete any files found. Alert the user if no files were found.
         if {[walk_files $root_dist yes $dist_path] eq "no"} {
             ui_msg "No distfiles found in root directory."
         }
 
+        ui_debug "Calling walk_files on home directory."
         # FIXME: Only commented because I accidentally delete all my dotfiles (including the home_dist location). It does in fact work on normal machines.
         #if {[walk_files $home_dist yes $dist_path] eq "no"} {
         #    ui_msg "No distfiles found in home directory."
@@ -231,8 +240,10 @@ namespace eval reclaim {
         #           1 if inactive, 0 if active.
 
         if {[lindex $app 4] == 0} {
+            ui_debug "App, [lindex $app 0], is inactive."
             return 1
         }
+        ui_debug "App, [lindex $app 0], is not inactive."
         return 0
     }
 
@@ -259,6 +270,8 @@ namespace eval reclaim {
         # Returns:
         #           None
 
+        ui_debug "Updating last run information."
+
         set path    [file join ${macports::portdbpath} last_reclaim.txt]
         set fd      [open $path w]
         puts $fd    [clock seconds]
@@ -274,7 +287,9 @@ namespace eval reclaim {
         # Returns: 
         #           None
 
-        set path    [file join ${macports::portdbpath} last_reclaim.txt]
+        ui_debug "Checking last run information."
+
+        set path [file join ${macports::portdbpath} last_reclaim.txt]
 
         if {[file exists $path]} {
 
@@ -304,6 +319,8 @@ namespace eval reclaim {
         set inactive_names  [list]
         set inactive_count  0
 
+        ui_debug "Iterating through all inactive apps."
+
         foreach app $apps {
 
             if { [is_inactive $app] } {
@@ -324,22 +341,20 @@ namespace eval reclaim {
             set input [gets stdin]
             if {$input eq "Y" || $input eq "y" } {
 
-                foreach app $inactive_apps {
+                ui_debug "Iterating through all inactive apps... again."
 
+                foreach app $inactive_apps {
                     set name [lindex $app 0]
 
                     # Get all dependents for the current application
                     if {[catch {set dependents [registry::list_dependents $name [lindex 1] [lindex 2] [lindex 3]]} error]} {
                         ui_error "something went wrong when trying to enumerate all dependents for $name"
                     }
-
                     if {dependents ne ""} {
-
                         ui_warn "the following application ($name) is a dependent for $dependents. Are you positive you'd like to uninstall this 
                                  (this could break other applications)? \[Y/N\]"
 
                         set input [gets stdin]
-
                         if { $input eq "N" || "n" } {
                             ui_msg "Skipping application."
                             continue
