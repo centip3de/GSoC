@@ -57,7 +57,7 @@ namespace eval macports {
     variable user_options {}
     variable portinterp_options "\
         portdbpath porturl portpath portbuildpath auto_path prefix prefix_frozen portsharepath \
-        registry.path registry.format user_home \
+        registry.path registry.format user_home user_path \
         portarchivetype archivefetch_pubkeys portautoclean porttrace keeplogs portverbose destroot_umask \
         rsync_server rsync_options rsync_dir startupitem_type startupitem_install place_worksymlink macportsuser \
         configureccache ccache_dir ccache_size configuredistcc configurepipe buildnicevalue buildmakejobs \
@@ -659,6 +659,9 @@ proc mportinit {{up_ui_options {}} {up_options {}} {up_variations {}}} {
         set macports::macports_user_dir /dev/null/NO_HOME_DIR
         set macports::user_home /dev/null/NO_HOME_DIR
     }
+
+    # Save the user's path for future processing.
+    set macports::user_path $env(PATH)
 
     # Configure the search path for configuration files
     set conf_files {}

@@ -5,7 +5,7 @@ package require macports
 namespace eval doctor {
     
     proc main {} {
-
+        
         # The main function. Handles all the calls to the correct functions, and sets the config_options array.
         #
         # Args:
@@ -101,19 +101,19 @@ namespace eval doctor {
         # Returns:
         #           None.
 
-        # FIXME - This currently grabs the wrong $PATH. Fix this by adding a new variable in mportinit that stores the correct $PATH
-        set output $::env(PATH)
+        set path ${macports::user_path}
+        set split [split $path :]
 
-        if {"$port_loc/bin" in $output && "$port_loc/sbin" in $output} {
+        if {"$port_loc/bin" in $split && "$port_loc/sbin" in $split } {
             return
 
         } else {
-            ui_warn "your environmental \$PATH variable does not currently include, /opt/local/bin, which is where port is located. \
-                     Would you like to add /opt/local/bin to your \$PATH variable now? \[Y/N\]"
+            ui_warn "your environmental \$PATH variable does not currently include, $port_loc/bin, which is where port is located. \
+                     Would you like to add $port_loc/bin to your \$PATH variable now? \[Y/N\]"
             set input [gets stdin]
 
             if {$input == "y" || $input == "Y"} {
-                ui_msg "Attempting to add /opt/local/bin to $profile_path"
+                ui_msg "Attempting to add $port_loc/bin to $profile_path"
 
                 if {[file exists $profile_path] == 1} {
                     set fd [open $profile_path a]
