@@ -3,10 +3,11 @@
 # Todo:
 # Move port_doctor.ini to the port tree, below _resources 
 # Command-Line tools version check
+# Support comments for the parser
+# Add error catching for line's without an equals sign. 
 
 package provide doctor 1.0 
 package require macports
-package require portutil 1.0
 
 namespace eval doctor {
     
@@ -19,13 +20,19 @@ namespace eval doctor {
         # Returns:
         #           None
 
-        array set config_options [list]
+        array set config_options    [list]
+        set parser_options          {"macports_location" "profile_path" "shell_location" "xcode_version_10.9" "xcode_version_10.8" \
+                                    "xcode_version_10.7" "xcode_version_10.6" "xcode_version_10.7" "xcode_version_10.6" "xcode_version_10.5" \
+                                    "xcode_version_10.4" "xcode_build"}
 
-        set parser_options {"macports_location" "profile_path" "shell_location" "xcode_version_10.9" "xcode_version_10.8" \
-                            "xcode_version_10.7" "xcode_version_10.6" "xcode_version_10.7" "xcode_version_10.6" "xcode_version_10.5" \
-                            "xcode_version_10.4" "xcode_build"}
+        set user_config_path        ${macports::portdbpath}/port_doctor.ini
+        set xcode_config_path       ${macports::portdbpath}/xcode_versions.ini
 
-        get_config config_options $parser_options
+        make_xcode_config
+        make_user_config
+
+        get_config config_options $parser_options $user_config_path 
+        get_config config_options $parser_options $xcode_config_path 
         check_path $config_options(macports_location) $config_options(profile_path) $config_options(shell_location)
         check_xcode config_options
     }
@@ -47,9 +54,30 @@ namespace eval doctor {
         }
     }
 
-    proc make_default_config {} {
+    proc make_xcode_config {} {
 
-        # Builds a config for the user, using all default parameters.
+        set path    ${macports::portdbpath}/xcode_versions.ini
+
+        if {[file exists $path] == 0} {
+            ui_warn "No configuration file found at $path. Creating generic config file."
+
+            set fd      [open $path w] 
+
+            puts $fd "xcode_version_10.9=5.1.1 5.1 5.0.2 5.0.1"
+            puts $fd "xcode_version_10.8=5.1 5.0.2 5.0.1 5.0 4.6.3 4.6.2 4.6.1 4.6 4.5.2 4.5.1 4.5"
+            puts $fd "xcode_version_10.7=4.6.3 4.6.2 4.6.1 4.6 4.5.2 4.5.1 4.5 4.3.3"
+            puts $fd "xcode_version_10.6=4.2 3.2.6 3.2.5 3.2.4 3.2.3 3.2.2 3.2.1 3.2"
+            puts $fd "xcode_version_10.5=3.1.4 3.1.3 3.1.2 3.1.1 3.1 3.0"
+            puts $fd "xcode_version_10.4=2.5 2.4.1 2.4 2.3 2.2.1 2.2 2.1 2.0"
+            puts $fd "xcode_build=5B1008"
+
+            close $fd
+        }
+    }
+     
+    proc make_user_config {} {
+
+        # Builds a config file for the user, using all default parameters.
         #
         # Args:
         #           None
@@ -57,23 +85,21 @@ namespace eval doctor {
         #           None
 
         set path    ${macports::portdbpath}/port_doctor.ini
-        set fd      [open $path w]
-        
-        puts $fd "macports_location=/opt/local"
-        puts $fd "profile_path=${macports::user_home}/.bash_profile"
-        puts $fd "shell_location=/bin/bash"
-        puts $fd "xcode_version_10.9=5.1.1 5.1 5.0.2 5.0.1"
-        puts $fd "xcode_version_10.8=5.1 5.0.2 5.0.1 5.0 4.6.3 4.6.2 4.6.1 4.6 4.5.2 4.5.1 4.5"
-        puts $fd "xcode_version_10.7=4.6.3 4.6.2 4.6.1 4.6 4.5.2 4.5.1 4.5 4.3.3"
-        puts $fd "xcode_version_10.6=4.2 3.2.6 3.2.5 3.2.4 3.2.3 3.2.2 3.2.1 3.2"
-        puts $fd "xcode_version_10.5=3.1.4 3.1.3 3.1.2 3.1.1 3.1 3.0"
-        puts $fd "xcode_version_10.4=2.5 2.4.1 2.4 2.3 2.2.1 2.2 2.1 2.0"
-        puts $fd "xcode_build=5B1008"
-        
-        close $fd
+ 
+        if {[file exists $path] == 0} {
+
+            ui_warn "No configuration file found at $path. Creating generic config file."
+           
+            set fd      [open $path w]
+            puts $fd "macports_location=/opt/local"
+            puts $fd "profile_path=${macports::user_home}/.bash_profile"
+            puts $fd "shell_location=/bin/bash"
+           
+            close $fd
+        }
    }
 
-    proc get_config {config_options parser_options} {
+    proc get_config {config_options parser_options path} {
 
         # Reads in and parses the configureation file, port_doctor.ini. After parsing, all variables found are assigned 
         # in the 'config_options' associative array.
@@ -81,17 +107,11 @@ namespace eval doctor {
         # Args:
         #           config_options - The associative array responsible for holding all the configuration options.
         #           parser_options - The list responsible for holding each option to set/look for in the configuration file.
+        #           path           - The path to the correct config_file
         # Returns:
         #           None. 
 
         upvar $config_options config 
-
-        set path ${macports::portdbpath}/port_doctor.ini
-
-        if {[file exists $path] == 0} {
-            ui_warn "No configuration file found. Creating generic config file."
-            make_default_config
-        }
 
         set fd   [open $path r]
         set text [read $fd]
@@ -109,7 +129,7 @@ namespace eval doctor {
                 continue
 
             } else {
-                ui_error "unrecognized port_doctor.ini config option: [lindex $tokens 0]"
+                ui_error "unrecognized config option in file $path: [lindex $tokens 0]"
             }
         }
     }
