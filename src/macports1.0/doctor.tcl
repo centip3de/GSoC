@@ -1,10 +1,18 @@
 
-
 # Todo:
+# Check for x11.app if the OS is 10.6 and suggest installing xorg-server or the site on macosforge
+# Check if macports is in /opt/local
+# Check for things in /usr/local
+# Check for amount of drive space
 # Move port_doctor.ini to the port tree, below _resources 
 # Command-Line tools version check
 # Support comments for the parser
 # Add error catching for line's without an equals sign. 
+
+# Done:
+# Check for curl
+# Check for rsync
+
 
 package provide doctor 1.0 
 package require macports
@@ -40,6 +48,38 @@ namespace eval doctor {
         # Start the checks
         check_path $config_options(macports_location) $config_options(profile_path) $config_options(shell_location)
         check_xcode config_options
+        check_for_app curl
+        check_for_app rsync
+        check_macports_location
+    }
+
+    proc check_macports_location {} {
+
+        # Checks to see if port is where it should be. If it isn't, freak the frick out.
+        #
+        # Args:
+        #           None
+        # Returns:
+        #           None
+
+        if {[file exists ${macports::prefix}/bin/port] == 0} {
+            ui_error "port was not in ${macports::prefix}/bin. This can potentially cause errors. It's recommended you move it back to ${macports::prefix}/bin."
+        }
+   }
+
+    proc check_for_app {app} {
+
+        # Check's if the binary supplied exists in /usr/bin. If it doesn't, it warns the user. 
+        #
+        # Args:
+        #           app - The name of the app to check for.
+        # Returns
+        #           None
+
+        if {[file exists /usr/bin/$app] == 0} {
+            ui_error "$app is needed by MacPorts to function normally, but wasn't found on this system. We'd recommend \
+                      installing it for continued use of MacPorts." 
+        }
     }
 
     proc check_xcode {config_options} {
