@@ -13,7 +13,8 @@ namespace eval doctor {
     
     proc main {} {
         
-        # The main function. Handles all the calls to the correct functions, and sets the config_options array.
+        # The main function. Handles all the calls to the correct functions, and sets the config_options array, 
+        # as well as the parser_options array.
         #
         # Args:
         #           None
@@ -28,16 +29,28 @@ namespace eval doctor {
         set user_config_path        ${macports::portdbpath}/port_doctor.ini
         set xcode_config_path       ${macports::portdbpath}/xcode_versions.ini
 
+        # Make sure at least a default copy of the xcode and user config exist
         make_xcode_config
         make_user_config
 
+        # Read the config files
         get_config config_options $parser_options $user_config_path 
         get_config config_options $parser_options $xcode_config_path 
+
+        # Start the checks
         check_path $config_options(macports_location) $config_options(profile_path) $config_options(shell_location)
         check_xcode config_options
     }
 
     proc check_xcode {config_options} {
+        
+        # Checks to see if the currently installed version of Xcode works with the curent OS version.
+        # 
+        # Args:
+        #           config_options - The associative array containing all options in the config files
+        # Returns:
+        #           None
+
         upvar $config_options config 
 
         set mac_version     ${macports::macosx_version}
@@ -55,6 +68,13 @@ namespace eval doctor {
     }
 
     proc make_xcode_config {} {
+        
+        # Checks to see if xcode_versions.ini exists. If it does, it returns. If it doesn't, then it creats a defult config file.
+        # 
+        # Args: 
+        #           None
+        # Returns:
+        #           None
 
         set path    ${macports::portdbpath}/xcode_versions.ini
 
@@ -77,7 +97,7 @@ namespace eval doctor {
      
     proc make_user_config {} {
 
-        # Builds a config file for the user, using all default parameters.
+        # Builds a config file for the user using all default parameters if needed.
         #
         # Args:
         #           None
