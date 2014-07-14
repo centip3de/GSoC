@@ -1,17 +1,17 @@
 
 # Todo:
 # Check for x11.app if the OS is 10.6 and suggest installing xorg-server or the site on macosforge
-# Check if macports is in /opt/local
 # Check for things in /usr/local
 # Check for amount of drive space
-# Move port_doctor.ini to the port tree, below _resources 
 # Command-Line tools version check
 # Support comments for the parser
 # Add error catching for line's without an equals sign. 
 
 # Done:
+# Move port_doctor.ini to the port tree, below _resources 
 # Check for curl
 # Check for rsync
+# Check if macports is in /opt/local
 
 
 package provide doctor 1.0 
@@ -35,7 +35,7 @@ namespace eval doctor {
                                     "xcode_version_10.4" "xcode_build"}
 
         set user_config_path        ${macports::portdbpath}/port_doctor.ini
-        set xcode_config_path       ${macports::portdbpath}/xcode_versions.ini
+        set xcode_config_path       ${macports::portdbpath}/sources/rsync.macports.org/release/tarballs/ports/_resources/xcode_versions.ini
 
         # Make sure at least a default copy of the xcode and user config exist
         make_xcode_config
@@ -116,7 +116,9 @@ namespace eval doctor {
         # Returns:
         #           None
 
-        set path    ${macports::portdbpath}/xcode_versions.ini
+        #FIXME: This most likely shouldn't be hardcoded... but for now it is. Fix it. 
+
+        set path    ${macports::portdbpath}/sources/rsync.macports.org/release/tarballs/ports/_resources/xcode_versions.ini
 
         if {[file exists $path] == 0} {
             ui_warn "No configuration file found at $path. Creating generic config file."
@@ -151,7 +153,7 @@ namespace eval doctor {
             ui_warn "No configuration file found at $path. Creating generic config file."
            
             set fd      [open $path w]
-            puts $fd "macports_location=/opt/local"
+            puts $fd "macports_location=${macports::prefix}"
             puts $fd "profile_path=${macports::user_home}/.bash_profile"
             puts $fd "shell_location=/bin/bash"
            
