@@ -1,11 +1,11 @@
 
 # Todo:
-# Check for x11.app if the OS is 10.6 and suggest installing xorg-server or the site on macosforge
 # Check for things in /usr/local
 # Command-Line tools version check
-# Add error catching for line's without an equals sign. 
 
 # Done:
+# Check for x11.app if the OS is 10.6 and suggest installing xorg-server or the site on macosforge
+# Add error catching for line's without an equals sign. 
 # Support comments for the parser
 # Check for amount of drive space
 # Move port_doctor.ini to the port tree, below _resources 
@@ -52,9 +52,39 @@ namespace eval doctor {
         check_for_app rsync
         check_macports_location
         check_free_space
+        check_for_x11
+    }
+
+    proc check_for_x11 {} {
+
+        # Checks to see if the user is using the X11.app, and if they're on 10.6. If they are, it alerts them about it.
+        #
+        # Args:
+        #           None
+        # Returns:
+        #           None
+
+        set mac_version ${macports::macosx_version}
+
+        if {$mac_version == 10.6} {
+
+            if {[file exists /Applications/X11.app]} {
+                ui_error "it seems you have Mac OSX 10.6 installed, and are using X11 from \"X11.app\". This has been known to cause issues. \
+                         To fix this, please install xorg-server, by using the command 'sudo port install xorg-server', or installing it from \
+                         their website, http://xquartz.macosforge.org/trac/wiki/Releases."
+            }
+        }
     }
 
     proc check_free_space {} {
+
+        # Checks to see if the user has less than 5 gigs of space left, and warns if they don't.
+        #
+        # Args:
+        #           None
+        # Returns:
+        #           None
+
         set output          [exec df -g]
         set tokens          [split $output \n]
         set disk_info       [lindex $tokens 1]
