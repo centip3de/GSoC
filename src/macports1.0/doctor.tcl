@@ -3,10 +3,10 @@
 # Check for x11.app if the OS is 10.6 and suggest installing xorg-server or the site on macosforge
 # Check for things in /usr/local
 # Command-Line tools version check
-# Support comments for the parser
 # Add error catching for line's without an equals sign. 
 
 # Done:
+# Support comments for the parser
 # Check for amount of drive space
 # Move port_doctor.ini to the port tree, below _resources 
 # Check for curl
@@ -176,8 +176,8 @@ namespace eval doctor {
 
     proc get_config {config_options parser_options path} {
 
-        # Reads in and parses the configureation file, port_doctor.ini. After parsing, all variables found are assigned 
-        # in the 'config_options' associative array.
+        # Reads in and parses the configuration file passed in to $path. After parsing, all variables found are assigned 
+        # in the 'config_options' associative array. 
         #
         # Args:
         #           config_options - The associative array responsible for holding all the configuration options.
@@ -195,11 +195,20 @@ namespace eval doctor {
         close $fd
 
         foreach line $data { 
+
+            # Ignore comments
+            if {[string index $line 0] eq "#" } {
+                continue
+            }
+
+            #The tokens
             set tokens [split $line "="]
 
+            # Only care about things that are in $parser_options
             if {[lindex $tokens 0] in $parser_options} {
                 set config([lindex $tokens 0]) [lindex $tokens 1]
             
+            # Ignore whitespace
             } elseif {[lindex $tokens 0] eq ""} {
                 continue
 
