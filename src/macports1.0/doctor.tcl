@@ -2,12 +2,12 @@
 # Todo:
 # Check for x11.app if the OS is 10.6 and suggest installing xorg-server or the site on macosforge
 # Check for things in /usr/local
-# Check for amount of drive space
 # Command-Line tools version check
 # Support comments for the parser
 # Add error catching for line's without an equals sign. 
 
 # Done:
+# Check for amount of drive space
 # Move port_doctor.ini to the port tree, below _resources 
 # Check for curl
 # Check for rsync
@@ -51,6 +51,19 @@ namespace eval doctor {
         check_for_app curl
         check_for_app rsync
         check_macports_location
+        check_free_space
+    }
+
+    proc check_free_space {} {
+        set output          [exec df -g]
+        set tokens          [split $output \n]
+        set disk_info       [lindex $tokens 1]
+        set availible       [lindex $disk_info 3]
+
+        if {$availible < 5} {
+            ui_warn "you have less than 5 gigabytes free on your machine! This can cause serious errors. We recommend trying to clear out unnecessary \
+                     programs and files by running 'sudo port reclaim', or manually uninstalling/deleting programs and folders on your drive."
+        }
     }
 
     proc check_macports_location {} {
