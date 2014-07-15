@@ -1,9 +1,10 @@
 
 # Todo:
-# Check for things in /usr/local
 # Command-Line tools version check
+# Crowd-source more ideas from the mailing-list
 
 # Done:
+# Check for things in /usr/local
 # Check for x11.app if the OS is 10.6 and suggest installing xorg-server or the site on macosforge
 # Add error catching for line's without an equals sign. 
 # Support comments for the parser
@@ -16,6 +17,7 @@
 
 package provide doctor 1.0 
 package require macports
+package require reclaim 1.0
 
 namespace eval doctor {
     
@@ -53,6 +55,23 @@ namespace eval doctor {
         check_macports_location
         check_free_space
         check_for_x11
+        check_for_files "/usr/local/lib"
+        check_for_files "/usr/local/include"
+    }
+
+    proc check_for_files {dir} {
+
+        # Checks for files in the given directory, and warns the user about said files if they are found.
+        # 
+        # Args:
+        #           dir - The directory to check
+        # Returns:
+        #           None
+        
+        if {![reclaim::is_empty_dir $dir]} {
+            ui_warn "found items in your $dir directory. Having files in here is known to cause problems. We'd recommend \
+                     you remove these files."
+        }
     }
 
     proc check_for_x11 {} {
@@ -284,11 +303,8 @@ namespace eval doctor {
                 puts $fd "export PATH=$port_loc/bin:$port_loc/sbin:\$PATH"
                 close $fd
 
-                ui_msg "Reloading $profile_path..."
-                exec $shell_loc $profile_path
+                ui_msg "Added PATH properly. Please execute, 'source $profile_path' in a new terminal window."
 
-                ui_msg "Port should now be successfully set up."
-                
             } elseif {$input == "n" || $input == "N"} {    
                 ui_msg "Not fixing your \$PATH variable."
 
