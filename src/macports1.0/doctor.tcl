@@ -1,9 +1,10 @@
 
 # Todo:
-# Command-Line tools version check
 # Crowd-source more ideas from the mailing-list
 
 # Done:
+# Check for all files installed by ports exists
+# Check for archives from all ports exists
 # Check for things in /usr/local
 # Check for x11.app if the OS is 10.6 and suggest installing xorg-server or the site on macosforge
 # Add error catching for line's without an equals sign. 
@@ -16,6 +17,7 @@
 
 
 package provide doctor 1.0 
+
 package require macports
 package require reclaim 1.0
 
@@ -55,11 +57,73 @@ namespace eval doctor {
         check_macports_location
         check_free_space
         check_for_x11
-        check_for_files "/usr/local/lib"
-        check_for_files "/usr/local/include"
+        check_for_files_in "/usr/local/lib"
+        check_for_files_in "/usr/local/include"
+        check_tarballs 
+        check_port_files 
     }
 
-    proc check_for_files {dir} {
+    proc check_port_files {} {
+        
+        # Checks to see if each file installed by all active and installed ports actually exists on the filesystem. If not, it warns
+        # the user and suggests the user deactivate and reactivate the port.
+        #
+        # Args:
+        #           None
+        # Returns:
+        #           None
+
+        set apps [reclaim::get_info]
+
+        foreach app $apps {
+            
+            set name    [lindex $app 0]
+            set active  [lindex $app 4]
+            set files   [registry::port_registered $name]
+
+            if {$active} { 
+
+                foreach file $files {
+                    
+                    if {[file exists $file]} {
+                        ui_warn "couldn't find file '$file' for port '$name'. Please deactivate and reactivate the port to fix this issue."
+                    }
+                }
+            }
+        }
+
+    } 
+
+    proc check_tarballs {} {
+
+        # Checks if the archives for each installed port in /opt/local/var/macports/software/$name is actually in there. If not, it warns
+        # the user and suggest a reinstallation of the port. 
+        #
+        # Args:
+        #           None
+        # Returns:
+        #           None
+
+        set apps [reclaim::get_info]
+
+        foreach app $apps {
+
+            set name        [lindex $app 0]
+            set version     [lindex $app 1]
+            set revision    [lindex $app 2]
+            set variants    [lindex $app 3]
+            set epoch       [lindex $app 5]
+
+            set ref         [registry::open_entry $name $version $revision $variants $epoch]
+            set image_dir   [registry::property_retrieve $ref location]
+
+            if {![file exists $image_dir]} {
+                ui_warn "couldn't find the archive for '$name'. Please uninstall and reinstall this application."
+            }
+        }
+    }
+
+    proc check_for_files_in {dir} {
 
         # Checks for files in the given directory, and warns the user about said files if they are found.
         # 
