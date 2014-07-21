@@ -71,6 +71,32 @@ namespace eval doctor {
         check_port_files 
         check_for_package_managers
         check_for_stray_developer_directory
+        check_compilation_error_cache
+    }
+
+    proc check_compilation_error_cache {} {
+
+        # Checks to see if the compiler can compile properly, or it throws the error, "couldn't create cache file".
+        #
+        # Args: 
+        #           None
+        # Returns:
+        #           None
+
+        set filename    "test.c"
+        set fd          [open $filename w]
+        
+        puts $fd "int main() { return 0; }"
+        close $fd
+
+        set output      [exec clang $filename -o main_test]
+
+        file delete $filename
+        file delete "main_test"
+
+        if {"couldn't create cache file" in $output} {
+            ui_warn "found an error with compilation."
+        }
     }
 
     proc check_for_stray_developer_directory {} {
