@@ -1,6 +1,5 @@
 
 # Todo:
-# check_for_stray_developer_directory 
 # Check for any DYLD_* environmental variables
 # Check for issues with compilation. Compile small, simple file, check for "couldn't create cache file"
 # Check the $DISPLAY
@@ -8,6 +7,7 @@
 # Crowd-source more ideas from the mailing-list
 
 # Done:
+# check_for_stray_developer_directory
 # Check for *.h, *.hpp, *.hxx in /usr/local/include
 # Check for *.dylib in /usr/local/lib
 # Check for other package managers. Fink = /sw, homebrew = /usr/local/Cellar
@@ -70,6 +70,24 @@ namespace eval doctor {
         check_tarballs 
         check_port_files 
         check_for_package_managers
+        check_for_stray_developer_directory
+    }
+
+    proc check_for_stray_developer_directory {} {
+
+        # Checks to see if the script to remove leftover files from Xcode has been run or not. Implementation heavily influenced
+        # by Homebrew implementation. 
+        #
+        # Args:
+        #           None
+        # Returns:
+        #           None
+        
+        set uninstaller "/Developer/Library/uninstall-developer-folder"
+        
+        if {${macports::xcodeversion} >= 4.3 && [file exists $uninstaller]} { 
+            ui_warn "you have leftover files from an older version of Xcode. You should delete them by using, $uninstaller"
+        }
     }
 
     proc check_for_package_managers {} {
