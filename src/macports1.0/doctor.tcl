@@ -428,6 +428,11 @@ namespace eval doctor {
         set split [split $path :]
 
         if {"$port_loc/bin" in $split && "$port_loc/sbin" in $split } {
+
+            if {[lindex $split 0] != "$port_loc/bin"} {
+                ui_warn "$port_loc/bin is not first in your PATH environmental variable.  This may or may not \
+                         cause problems in the future."
+            }
             return
 
         } else {
