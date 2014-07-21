@@ -1,16 +1,16 @@
 
 # Todo:
-# Check for *.dylib in /usr/local/lib
-# Check for *.h, *.hpp, *.hxx in /usr/local/include
 # check_for_stray_developer_directory 
 # Check for any DYLD_* environmental variables
 # Check for issues with compilation. Compile small, simple file, check for "couldn't create cache file"
 # Check the $DISPLAY
 # Check if $PATH is first
-# Check for other package managers. Fink = /sw, homebrew = /usr/local/Cellar
 # Crowd-source more ideas from the mailing-list
 
 # Done:
+# Check for *.h, *.hpp, *.hxx in /usr/local/include
+# Check for *.dylib in /usr/local/lib
+# Check for other package managers. Fink = /sw, homebrew = /usr/local/Cellar
 # Check for all files installed by ports exists
 # Check for archives from all ports exists
 # Check for things in /usr/local
@@ -65,8 +65,8 @@ namespace eval doctor {
         check_macports_location
         check_free_space
         check_for_x11
-        check_for_files_in "/usr/local/lib"
-        check_for_files_in "/usr/local/include"
+        check_for_files_in_usr_local 
+        check_for_files_in_usr_local 
         check_tarballs 
         check_port_files 
         check_for_package_managers
@@ -87,7 +87,7 @@ namespace eval doctor {
                      with MacPorts. We'd recommend you either uninstall it, or move it from /usr/local for now."
         }
 
-        if {[file exists "/sf"]} {
+        if {[file exists "/sw"]} {
             ui_warn "it seems you have Fink installed on your system -- This could potentially cause issues with MacPorts. We'd recommend you'd \
                      either uninstall it, or move it from /sf for now."
         }
@@ -153,18 +153,24 @@ namespace eval doctor {
         }
     }
 
-    proc check_for_files_in {dir} {
+    proc check_for_files_in_usr_local {} {
 
-        # Checks for files in the given directory, and warns the user about said files if they are found.
+        # Checks for dylibs in /usr/local/lib and header files in /usr/local/include, and warns the user about said files if they 
+        # are found.
         # 
         # Args:
-        #           dir - The directory to check
+        #           None 
         # Returns:
         #           None
-        
-        if {![reclaim::is_empty_dir $dir]} {
-            ui_warn "found items in your $dir directory. Having files in here is known to cause problems. We'd recommend \
-                     you remove these files."
+
+        if {[glob -nocomplain -directory "/usr/local/lib" *.dylib] ne ""} {
+            ui_warn "found dylib's in your /usr/local/lib directory. These are known to cause problems. We'd recommend \
+                     you remove them."
+        }
+
+        if {[glob -nocomplain -directory "/usr/local/include" *.h *.hpp *.hxx] ne ""} {
+            ui_warn "found header files in your /usr/local/include directory. These are known to cause problems. We'd recommend \
+                     you remove them."
         }
     }
 
