@@ -1,5 +1,13 @@
 
 # Todo:
+# Check for *.dylib in /usr/local/lib
+# Check for *.h, *.hpp, *.hxx in /usr/local/include
+# check_for_stray_developer_directory 
+# Check for any DYLD_* environmental variables
+# Check for issues with compilation. Compile small, simple file, check for "couldn't create cache file"
+# Check the $DISPLAY
+# Check if $PATH is first
+# Check for other package managers. Fink = /sw, homebrew = /usr/local/Cellar
 # Crowd-source more ideas from the mailing-list
 
 # Done:
@@ -61,6 +69,28 @@ namespace eval doctor {
         check_for_files_in "/usr/local/include"
         check_tarballs 
         check_port_files 
+        check_for_package_managers
+    }
+
+    proc check_for_package_managers {} {
+
+        # Checks to see if either Fink or Homebrew are installed on the system. If they are, it warns them and suggest they uninstall
+        # or move them to a different location.
+        # 
+        # Args:
+        #           None
+        # Returns:
+        #           None
+        
+        if {[file exists "/usr/local/Cellar"]} {
+            ui_warn "it seems you have Homebrew installed on this system -- Because Homebrew uses /usr/local, this can potentially cause issues \
+                     with MacPorts. We'd recommend you either uninstall it, or move it from /usr/local for now."
+        }
+
+        if {[file exists "/sf"]} {
+            ui_warn "it seems you have Fink installed on your system -- This could potentially cause issues with MacPorts. We'd recommend you'd \
+                     either uninstall it, or move it from /sf for now."
+        }
     }
 
     proc check_port_files {} {
@@ -85,7 +115,7 @@ namespace eval doctor {
 
                 foreach file $files {
                     
-                    if {[file exists $file]} {
+                    if {![file exists $file]} {
                         ui_warn "couldn't find file '$file' for port '$name'. Please deactivate and reactivate the port to fix this issue."
                     }
                 }
