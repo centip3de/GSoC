@@ -1,12 +1,12 @@
 
 # Todo:
 # Check for any DYLD_* environmental variables
-# Check for issues with compilation. Compile small, simple file, check for "couldn't create cache file"
 # Check the $DISPLAY
 # Check if $PATH is first
 # Crowd-source more ideas from the mailing-list
 
 # Done:
+# Check for issues with compilation. Compile small, simple file, check for "couldn't create cache file"
 # check_for_stray_developer_directory
 # Check for *.h, *.hpp, *.hxx in /usr/local/include
 # Check for *.dylib in /usr/local/lib
@@ -94,8 +94,9 @@ namespace eval doctor {
         file delete $filename
         file delete "main_test"
 
-        if {"couldn't create cache file" in $output} {
-            ui_warn "found an error with compilation."
+        if {"couldn't create cache file" in $output == 0} {
+            ui_warn "found errors when attempting to compile file. To fix this issue, delete your tmp folder using:
+                       rm -rf \$TMPDIR"
         }
     }
 
