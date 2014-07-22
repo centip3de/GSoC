@@ -1,11 +1,11 @@
 
 # Todo:
-# Check if installed files are readable 
 # Check for command line tools
 # Check for any DYLD_* environmental variables
 # Check the $DISPLAY
 
 # Done:
+# Check if installed files are readable 
 # Check for sqlite
 # Check for openssl
 # Crowd-source more ideas from the mailing-list
@@ -164,9 +164,15 @@ namespace eval doctor {
             if {$active} { 
 
                 foreach file $files {
+
                     
                     if {![file exists $file]} {
                         ui_warn "couldn't find file '$file' for port '$name'. Please deactivate and reactivate the port to fix this issue."
+                    }
+
+                    if {![file readable $file]} {
+                        ui_warn "'$file' installed by port '$name' is currently not readable. Please try again. If this problem persists, please contact\
+                                 the mailing list."
                     }
                 }
             }
