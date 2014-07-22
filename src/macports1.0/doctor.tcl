@@ -1,11 +1,15 @@
 
 # Todo:
+# Check if installed files are readable 
+# Check for command line tools
 # Check for any DYLD_* environmental variables
 # Check the $DISPLAY
-# Check if $PATH is first
-# Crowd-source more ideas from the mailing-list
 
 # Done:
+# Check for sqlite
+# Check for openssl
+# Crowd-source more ideas from the mailing-list
+# Check if $PATH is first
 # Check for issues with compilation. Compile small, simple file, check for "couldn't create cache file"
 # check_for_stray_developer_directory
 # Check for *.h, *.hpp, *.hxx in /usr/local/include
@@ -62,10 +66,11 @@ namespace eval doctor {
         check_xcode config_options
         check_for_app curl
         check_for_app rsync
+        check_for_app openssl
+        check_for_app sqlite3
         check_macports_location
         check_free_space
         check_for_x11
-        check_for_files_in_usr_local 
         check_for_files_in_usr_local 
         check_tarballs 
         check_port_files 
@@ -94,7 +99,7 @@ namespace eval doctor {
         file delete $filename
         file delete "main_test"
 
-        if {"couldn't create cache file" in $output == 0} {
+        if {"couldn't create cache file" in $output} {
             ui_warn "found errors when attempting to compile file. To fix this issue, delete your tmp folder using:
                        rm -rf \$TMPDIR"
         }
