@@ -79,6 +79,19 @@ namespace eval doctor {
         check_compilation_error_cache
     }
 
+    proc output {string} {
+        ui_msg -nonewline "Checking for $string... "
+    }
+
+    proc success_fail {result} {
+
+        if {$result == 1} {
+            ui_msg "\[SUCCESS\]"
+            return
+        }
+        ui_msg "\[FAILED\]"
+    }
+
     proc check_compilation_error_cache {} {
 
         # Checks to see if the compiler can compile properly, or it throws the error, "couldn't create cache file".
@@ -87,6 +100,8 @@ namespace eval doctor {
         #           None
         # Returns:
         #           None
+
+        output "compilation errors"
 
         set filename    "test.c"
         set fd          [open $filename w]
@@ -102,7 +117,12 @@ namespace eval doctor {
         if {"couldn't create cache file" in $output} {
             ui_warn "found errors when attempting to compile file. To fix this issue, delete your tmp folder using:
                        rm -rf \$TMPDIR"
+            success_fail 0 
+            return
         }
+
+        success_fail 1 
+       
     }
 
     proc check_for_stray_developer_directory {} {
@@ -114,12 +134,19 @@ namespace eval doctor {
         #           None
         # Returns:
         #           None
+
+        output "stray developer directory"
         
         set uninstaller "/Developer/Library/uninstall-developer-folder"
         
         if {${macports::xcodeversion} >= 4.3 && [file exists $uninstaller]} { 
             ui_warn "you have leftover files from an older version of Xcode. You should delete them by using, $uninstaller"
-        }
+
+            success_fail 0 
+            return
+        } 
+
+        success_fail 1 
     }
 
     proc check_for_package_managers {} {
@@ -131,15 +158,30 @@ namespace eval doctor {
         #           None
         # Returns:
         #           None
+
+        output "HomeBrew"
         
         if {[file exists "/usr/local/Cellar"]} {
             ui_warn "it seems you have Homebrew installed on this system -- Because Homebrew uses /usr/local, this can potentially cause issues \
                      with MacPorts. We'd recommend you either uninstall it, or move it from /usr/local for now."
+
+            success_fail 0
+
+        } else {
+
+            success_fail 1
         }
 
-        if {[file exists "/sw"]} {
+        output "Fink"
+        if {[file exists "/sf"]} {
             ui_warn "it seems you have Fink installed on your system -- This could potentially cause issues with MacPorts. We'd recommend you'd \
                      either uninstall it, or move it from /sf for now."
+
+            success_fail 0
+ 
+        } else {
+
+            success_fail 1
         }
     }
 
@@ -153,9 +195,11 @@ namespace eval doctor {
         # Returns:
         #           None
 
+
         set apps [reclaim::get_info]
 
         foreach app $apps {
+
             
             set name    [lindex $app 0]
             set active  [lindex $app 4]
@@ -165,14 +209,20 @@ namespace eval doctor {
 
                 foreach file $files {
 
+                    output "file '$file' on disk"
                     
                     if {![file exists $file]} {
+                        success_fail 0
                         ui_warn "couldn't find file '$file' for port '$name'. Please deactivate and reactivate the port to fix this issue."
-                    }
 
-                    if {![file readable $file]} {
+                    } elseif {![file readable $file]} {
+                        success_fail 0
                         ui_warn "'$file' installed by port '$name' is currently not readable. Please try again. If this problem persists, please contact\
                                  the mailing list."
+
+                    } else {
+
+                        success_fail 1
                     }
                 }
             }
@@ -194,6 +244,8 @@ namespace eval doctor {
 
         foreach app $apps {
 
+            output "'$app's tarball on disk"
+
             set name        [lindex $app 0]
             set version     [lindex $app 1]
             set revision    [lindex $app 2]
@@ -205,6 +257,9 @@ namespace eval doctor {
 
             if {![file exists $image_dir]} {
                 ui_warn "couldn't find the archive for '$name'. Please uninstall and reinstall this application."
+                success_fail 0
+            } else {
+                success_fail 1
             }
         }
     }
@@ -219,14 +274,30 @@ namespace eval doctor {
         # Returns:
         #           None
 
+        output "dylibs in /usr/local/lib"
+
         if {[glob -nocomplain -directory "/usr/local/lib" *.dylib] ne ""} {
             ui_warn "found dylib's in your /usr/local/lib directory. These are known to cause problems. We'd recommend \
                      you remove them."
+
+            success_fail 0
+
+        } else {
+
+            success_fail 1
         }
+
+        output "header files in /usr/local/include"
 
         if {[glob -nocomplain -directory "/usr/local/include" *.h *.hpp *.hxx] ne ""} {
             ui_warn "found header files in your /usr/local/include directory. These are known to cause problems. We'd recommend \
                      you remove them."
+
+            success_fail 0
+
+        } else {
+
+            success_fail 1
         }
     }
 
@@ -239,6 +310,8 @@ namespace eval doctor {
         # Returns:
         #           None
 
+        output "X11.app on OS X 10.6 systems"
+
         set mac_version ${macports::macosx_version}
 
         if {$mac_version == 10.6} {
@@ -247,8 +320,13 @@ namespace eval doctor {
                 ui_error "it seems you have Mac OSX 10.6 installed, and are using X11 from \"X11.app\". This has been known to cause issues. \
                          To fix this, please install xorg-server, by using the command 'sudo port install xorg-server', or installing it from \
                          their website, http://xquartz.macosforge.org/trac/wiki/Releases."
+
+                success_fail 0
+                return
             }
         }
+
+        success_fail 1
     }
 
     proc check_free_space {} {
@@ -260,6 +338,8 @@ namespace eval doctor {
         # Returns:
         #           None
 
+        output "free disk space"
+
         set output          [exec df -g]
         set tokens          [split $output \n]
         set disk_info       [lindex $tokens 1]
@@ -268,7 +348,12 @@ namespace eval doctor {
         if {$availible < 5} {
             ui_warn "you have less than 5 gigabytes free on your machine! This can cause serious errors. We recommend trying to clear out unnecessary \
                      programs and files by running 'sudo port reclaim', or manually uninstalling/deleting programs and folders on your drive."
+
+            success_fail 0
+            return
         }
+
+        success_fail 1
     }
 
     proc check_macports_location {} {
@@ -280,9 +365,15 @@ namespace eval doctor {
         # Returns:
         #           None
 
+        output "MacPort's location"
+
         if {[file exists ${macports::prefix}/bin/port] == 0} {
             ui_error "port was not in ${macports::prefix}/bin. This can potentially cause errors. It's recommended you move it back to ${macports::prefix}/bin."
+            success_fail 0
+            return
         }
+
+        success_fail 1
    }
 
     proc check_for_app {app} {
@@ -294,10 +385,16 @@ namespace eval doctor {
         # Returns
         #           None
 
+        output "for '$app'"
+
         if {[file exists /usr/bin/$app] == 0} {
             ui_error "$app is needed by MacPorts to function normally, but wasn't found on this system. We'd recommend \
                       installing it for continued use of MacPorts." 
+            success_fail 0
+            return
         }
+
+        success_fail 1
     }
 
     proc check_xcode {config_options} {
@@ -309,6 +406,8 @@ namespace eval doctor {
         # Returns:
         #           None
 
+        output "correct Xcode version"
+
         upvar $config_options config 
 
         set mac_version     ${macports::macosx_version}
@@ -316,12 +415,14 @@ namespace eval doctor {
         set xcode_versions  $config(xcode_version_$mac_version)
 
         if {$xcode_current in $xcode_versions} {
+            success_fail 1
             return
         
         } else {
             ui_error "currently installed version of Xcode, $xcode_current, is not supported by MacPorts. \
                       For your currently installed system, only the following versions of Xcode are supported: \
                       $xcode_versions"
+            success_fail 0
         }
     }
 
