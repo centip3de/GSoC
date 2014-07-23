@@ -80,15 +80,32 @@ namespace eval doctor {
     }
 
     proc output {string} {
+        
+        # Outputs the given string formatted correctly.
+        #
+        # Args:
+        #           string - The string to be output 
+        # Returns:
+        #           None
+        
         ui_msg -nonewline "Checking for $string... "
     }
 
     proc success_fail {result} {
 
+        # Either outputs a [SUCCESS] or [FAILED], depending on the result.
+        #
+        # Args:
+        #           result - An integer value. 1 = [SUCCESS], anything else = [FAILED]
+        # Returns:
+        #           None
+
         if {$result == 1} {
+
             ui_msg "\[SUCCESS\]"
             return
         }
+
         ui_msg "\[FAILED\]"
     }
 
