@@ -1,10 +1,12 @@
 
 # Todo:
 # Check for command line tools
+# Add -q for quiet mode, where we don't print anything
 # Check for any DYLD_* environmental variables
 # Check the $DISPLAY
 
 # Done:
+# Check for '.la' in dylib and '.prl'
 # Check if installed files are readable 
 # Check for sqlite
 # Check for openssl
@@ -293,7 +295,7 @@ namespace eval doctor {
 
         output "dylibs in /usr/local/lib"
 
-        if {[glob -nocomplain -directory "/usr/local/lib" *.dylib] ne ""} {
+        if {[glob -nocomplain -directory "/usr/local/lib" *.dylib *.la *.prl] ne ""} {
             ui_warn "found dylib's in your /usr/local/lib directory. These are known to cause problems. We'd recommend \
                      you remove them."
 
