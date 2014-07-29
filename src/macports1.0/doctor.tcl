@@ -79,7 +79,34 @@ namespace eval doctor {
         check_for_package_managers
         check_for_stray_developer_directory
         check_compilation_error_cache
+        check_for_dyld
     }
+
+    proc check_for_dyld {} {
+
+        # Checks to see if the current MacPorts session is running with a DYLD_* environmental 
+        # variable set.
+        #
+        # Args:
+        #           None
+        # Returns:
+        #           None
+
+        output "DYLD_* environmental variables"
+
+        set printenv        [exec printenv]
+        set split           [split $printenv]
+
+        if {[regexp {DYLD_.} $split]} {
+            ui_warn "found a DYLD_* environmental variable. These are known to cause issues with MacPorts. Please\
+                     unset the variable for the duration MacPorts is running."
+
+            success_fail 0
+            return
+        }
+
+        success_fail 1
+   }
 
     proc output {string} {
         
