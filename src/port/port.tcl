@@ -2734,7 +2734,7 @@ proc action_doctor { action portlist opts } {
     if {[prefix_unwritable]} {
         return 1
     }
-    macports::doctor_main
+    macports::doctor_main $opts
     return 0
 }
 
@@ -4355,6 +4355,7 @@ array set cmd_opts_array {
     log         {{phase 1} {level 1}}
     upgrade     {force enforce-variants no-replace no-rev-upgrade}
     rev-upgrade {id-loadcmd-check}
+    doctor      {quiet}
 }
 
 ##

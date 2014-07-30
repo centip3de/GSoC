@@ -4371,7 +4371,7 @@ proc macports::arch_runnable {arch} {
     return yes
 }
 
-proc macports::doctor_main {} {
+proc macports::doctor_main {opts} {
     
     # Calls the main function for the 'port doctor' command.
     #
@@ -4380,7 +4380,7 @@ proc macports::doctor_main {} {
     # Returns:
     #           0 on successful execution.
 
-    doctor::main
+    doctor::main $opts
     return 0
 }
 

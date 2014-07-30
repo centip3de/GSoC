@@ -1,9 +1,9 @@
 
 # Todo:
-# Add -q for quiet mode, where we don't print anything
 # Check the $DISPLAY
 
 # Done:
+# Add -q for quiet mode, where we don't print anything
 # Check for command line tools
 # Check for any DYLD_* environmental variables
 # Check for '.la' in dylib and '.prl'
@@ -36,16 +36,26 @@ package require macports
 package require reclaim 1.0
 
 namespace eval doctor {
+
+    # Command line argument that determines whether or not to output things fancily. 
+    variable quiet 0
     
-    proc main {} {
+    proc main {opts} {
         
         # The main function. Handles all the calls to the correct functions, and sets the config_options array, 
         # as well as the parser_options array.
         #
         # Args:
-        #           None
+        #           opts - The options passed in. Currently the only option availible is 'quiet'. 
         # Returns:
         #           None
+
+        # Setting the 'quiet' variable based on what was passed in.
+        if {$opts ne ""} {
+            set doctor::quiet 1
+        } else {
+            set doctor::quiet 0
+        }
 
         array set config_options    [list]
         set parser_options          {"macports_location" "profile_path" "shell_location" "xcode_version_10.9" "xcode_version_10.8" \
@@ -159,8 +169,10 @@ namespace eval doctor {
         #           string - The string to be output 
         # Returns:
         #           None
-        
-        ui_msg -nonewline "Checking for $string... "
+
+        if {${doctor::quiet} eq 0} {
+            ui_msg -nonewline "Checking for $string... "
+        }
     }
 
     proc success_fail {result} {
@@ -172,13 +184,16 @@ namespace eval doctor {
         # Returns:
         #           None
 
-        if {$result == 1} {
+        if {${doctor::quiet} eq 0} {
 
-            ui_msg "\[SUCCESS\]"
-            return
+            if {$result == 1} {
+
+                ui_msg "\[SUCCESS\]"
+                return
+            }
+
+            ui_msg "\[FAILED\]"
         }
-
-        ui_msg "\[FAILED\]"
     }
 
     proc check_compilation_error_cache {} {
