@@ -1,11 +1,11 @@
 
 # Todo:
-# Check for command line tools
 # Add -q for quiet mode, where we don't print anything
-# Check for any DYLD_* environmental variables
 # Check the $DISPLAY
 
 # Done:
+# Check for command line tools
+# Check for any DYLD_* environmental variables
 # Check for '.la' in dylib and '.prl'
 # Check if installed files are readable 
 # Check for sqlite
@@ -80,6 +80,49 @@ namespace eval doctor {
         check_for_stray_developer_directory
         check_compilation_error_cache
         check_for_dyld
+        check_for_clt
+    }
+
+    proc check_for_clt {} {
+
+        # Checks to see if the Xcode Command Line Tools are installed by checking if the file
+        # /Library/Developer/CommandLineTools exists if the system is running 10.9, or if they're
+        # running an older version, if the command xcode-select -p outputs something.
+        #
+        # Args:
+        #           None
+        # Returns:
+        #           None
+
+        output "command line tools"
+
+        set version ${macports::macosx_version}
+
+        if {$version == 10.9} {
+
+            if {![file exists "/Library/Developer/CommandLineTools/"]} {
+
+                ui_warn "Xcode Command Line Tools are not installed! To install them, please enter the command:
+                                    xcode-select --install"
+                success_fail 0
+                return
+            }
+            success_fail 1
+            return
+
+        } else {
+
+            set xcode_select [exec xcode-select -p]
+
+            if {$xcode_select eq ""} {
+
+                ui_warn "Xcode Command Line Tools are not installed! To install them, please enter the command:
+                                    xcode-selct --install"
+                success_fail 0
+                return
+            }
+            success_fail 1
+        }
     }
 
     proc check_for_dyld {} {
