@@ -258,7 +258,11 @@ namespace eval reclaim {
         #           A multidimensional list where each app is a sublist, i.e., [{First Application Info} {Second Application Info} {...}]
         #           Indexes of each sublist are: 0 = name, 1 = version, 2 = revision, 3 = variants, 4 = activity, and 5 = epoch.
         
-        return [registry::installed]
+        if { [catch {set installed [registry::installed]} result]} {
+            ui_error "no installed applications found."
+        }
+
+        return $installed
     }
 
     proc update_last_run {} {
