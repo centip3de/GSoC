@@ -1,3 +1,4 @@
+#!@TCLSH@
 # -*- coding: utf-8; mode: tcl; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- vim:fenc=utf-8:filetype=tcl:et:sw=4:ts=4:sts=4
 # $Id: port.tcl 119177 2014-04-18 22:35:29Z cal@macports.org $
 #
