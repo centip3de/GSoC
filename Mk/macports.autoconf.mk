@@ -36,7 +36,7 @@ SHLIB_SUFFIX		= .dylib
 TCL_STUB_LIB_SPEC	= -L/Users/mrappleseed/GSoC/mports/trunk/base/vendor/tcl8.5.15/unix -ltclstub8.5
 
 LIBS			= 
-READLINE_LIBS		= -lreadline
+READLINE_LIBS		= 
 MD5_LIBS		= 
 SQLITE3_LIBS		= -lsqlite3
 CURL_LIBS		= -lcurl

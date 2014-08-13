@@ -69,7 +69,7 @@ namespace eval portutil::autoconf {
 	variable sandbox_exec_path "/usr/bin/sandbox-exec"
 	variable sed_command "/usr/bin/sed"
 	variable sed_ext_flag "-E"
-	variable tar_command "/usr/bin/tar"
+	variable tar_command "/usr/bin/gnutar"
 	variable tar_path "/usr/bin/tar"
 	variable tar_q "q"
 	variable hdiutil_path "/usr/bin/hdiutil"

@@ -46,7 +46,7 @@ namespace eval macports::autoconf {
     variable openssl_path "/usr/bin/openssl"
     variable pax_path "/bin/pax"
     variable rsync_path "/usr/bin/rsync"
-    variable tar_command "/usr/bin/tar"
+    variable tar_command "/usr/bin/gnutar"
     variable tar_path "/usr/bin/tar"
     variable tar_q "q"
     variable unzip_path "/usr/bin/unzip"

@@ -30,27 +30,27 @@
 
 /* Define to 1 if you have the declaration of `completion_matches', and to 0
    if you don't. */
-#define HAVE_DECL_COMPLETION_MATCHES 1
+/* #undef HAVE_DECL_COMPLETION_MATCHES */
 
 /* Define to 1 if you have the declaration of `filename_completion_function',
    and to 0 if you don't. */
-#define HAVE_DECL_FILENAME_COMPLETION_FUNCTION 1
+/* #undef HAVE_DECL_FILENAME_COMPLETION_FUNCTION */
 
 /* Define to 1 if you have the declaration of `rl_completion_matches', and to
    0 if you don't. */
-#define HAVE_DECL_RL_COMPLETION_MATCHES 1
+/* #undef HAVE_DECL_RL_COMPLETION_MATCHES */
 
 /* Define to 1 if you have the declaration of
    `rl_filename_completion_function', and to 0 if you don't. */
-#define HAVE_DECL_RL_FILENAME_COMPLETION_FUNCTION 1
+/* #undef HAVE_DECL_RL_FILENAME_COMPLETION_FUNCTION */
 
 /* Define to 1 if you have the declaration of
    `rl_username_completion_function', and to 0 if you don't. */
-#define HAVE_DECL_RL_USERNAME_COMPLETION_FUNCTION 0
+/* #undef HAVE_DECL_RL_USERNAME_COMPLETION_FUNCTION */
 
 /* Define to 1 if you have the declaration of `username_completion_function',
    and to 0 if you don't. */
-#define HAVE_DECL_USERNAME_COMPLETION_FUNCTION 1
+/* #undef HAVE_DECL_USERNAME_COMPLETION_FUNCTION */
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
@@ -103,7 +103,7 @@
 /* #undef HAVE_LIBMD */
 
 /* Define to 1 if you have the 'readline' library (-lreadline). */
-#define HAVE_LIBREADLINE 1
+/* #undef HAVE_LIBREADLINE */
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
